@@ -33,6 +33,9 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  int msSliderValue = 0;
+  int volumeSliderValue = 50;
+
   @override
   void initState() {
     super.initState();
@@ -51,269 +54,204 @@ class _MyAppState extends State<MyApp> {
             ),
           ),
         ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Expanded(
-                child: SuperListView(
-                  padding: const EdgeInsets.only(top: 10),
-                  primary: true,
-                  scrollDirection: Axis.vertical,
-                  children: [
-                    ...List.generate(
-                        2000,
-                        (index) => ListTile(
-                              leading: const Image(
-                                image: NetworkImage(
-                                    "https://f4.bcbits.com/img/a3247117645_10.jpg"),
-                                filterQuality: FilterQuality.medium,
-                              ),
-                              title: Text('HUG AND KILL'),
-                              subtitle: Text('Kobaryo'),
-                              dense: true,
-                              trailing: Text('03:37'),
-                              onTap: () {},
-                            )),
-                  ],
+        body: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Expanded(
+              child: trackList(),
+            ),
+            Container(
+              height: 20,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: SliderTheme(
+                data: nakedSliderThemeData(),
+                child: Slider(
+                  min: 0,
+                  max: Duration(minutes: 3, seconds: 37)
+                      .inMilliseconds
+                      .toDouble(),
+                  value: msSliderValue.toDouble(),
+                  divisions: Duration(minutes: 3, seconds: 37).inMilliseconds,
+                  onChanged: (value) {
+                    setState(() {
+                      msSliderValue = value.toInt();
+                    });
+                  },
                 ),
               ),
-              SizedBox(
-                height: 96,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Flexible(
+            ),
+            Container(
+              height: 96,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.all(Radius.circular(4)),
+                        child: Image(
+                          image: NetworkImage(
+                              "https://f4.bcbits.com/img/a3247117645_10.jpg"),
+                          filterQuality: FilterQuality.medium,
+                        ),
+                      ),
+                      SizedBox(
+                        width: 8,
+                      ),
+                      Flexible(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                                'HUG AND KIashdiuasdiouhajsoiudhasoidhoaijhdoiwLL',
+                                maxLines: 1,
+                                overflow: TextOverflow.fade,
+                                softWrap: false,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold)),
+                            Text('Kobaryo',
+                                maxLines: 1,
+                                overflow: TextOverflow.fade,
+                                softWrap: false,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.normal)),
+                            Text(
+                                "${Duration(milliseconds: msSliderValue).inMinutes}:${Duration(milliseconds: msSliderValue).inSeconds.remainder(60).toString().padLeft(2, '0')}/${Duration(minutes: 3, seconds: 37).inMinutes}:${Duration(minutes: 3, seconds: 37).inSeconds.remainder(60).toString().padLeft(2, '0')}",
+                                overflow: TextOverflow.fade,
+                                softWrap: false,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.normal)),
+                          ],
+                        ),
+                      ),
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Image.network(
-                            "https://f4.bcbits.com/img/a3247117645_10.jpg",
-                            fit: BoxFit.cover,
-                            isAntiAlias: true,
-                            filterQuality: FilterQuality.medium,
-                          ),
-                          const SizedBox(width: 10),
-                          Flexible(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Flexible(
-                                  child: Container(
-                                    constraints:
-                                        const BoxConstraints(maxHeight: 24),
-                                    child: LayoutBuilder(
-                                      builder: (context, constraints) {
-                                        TextSpan text = const TextSpan(
-                                            text:
-                                                "HUG AND KILLsaojdoiajdoiwjdaslkdj",
-                                            style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 16));
-                                        TextPainter textPainter = TextPainter(
-                                            text: text,
-                                            maxLines: 1,
-                                            textDirection: TextDirection.ltr);
-
-                                        textPainter.layout(
-                                            maxWidth: constraints.maxWidth);
-
-                                        return textPainter.didExceedMaxLines
-                                            ? Marquee(
-                                                text:
-                                                    "HUG AND KILLsaojdoiajdoiwjdaslkdj",
-                                                style: const TextStyle(
-                                                    overflow: TextOverflow.fade,
-                                                    fontSize: 16),
-                                                textDirection:
-                                                    TextDirection.ltr,
-                                                scrollAxis: Axis.horizontal,
-                                                velocity: 25,
-                                                blankSpace: 20,
-                                                onDone: () {
-                                                  print("DONE");
-                                                },
-                                                pauseAfterRound: const Duration(
-                                                    milliseconds: 1500),
-                                              )
-                                            : const Text(
-                                                "HUG AND KILLsaojdoiajdoiwjdaslkdj",
-                                                maxLines: 1,
-                                                softWrap: false,
-                                                overflow: TextOverflow.fade,
-                                                textDirection:
-                                                    TextDirection.ltr,
-                                                style: TextStyle(fontSize: 16));
-                                      },
-                                    ),
-                                  ),
-                                ),
-                                Text("Kobaryo",
-                                    maxLines: 1,
-                                    overflow: TextOverflow.fade,
-                                    style: TextStyle(
-                                        color: Colors.grey, fontSize: 12)),
-                              ],
+                          SizedBox(
+                            height: 24,
+                            child: IconButton(
+                              icon: const Icon(Icons.favorite_border),
+                              padding: EdgeInsets.all(0.0),
+                              iconSize: 16,
+                              onPressed: () {},
                             ),
                           ),
-                          Center(
+                          SizedBox(
+                            height: 24,
                             child: IconButton(
-                              iconSize: 10,
-                              icon: const Icon(Icons.favorite_border, size: 20),
+                              icon: const Icon(Icons.more_vert),
+                              padding: EdgeInsets.all(0.0),
+                              iconSize: 16,
                               onPressed: () {},
                             ),
                           ),
                         ],
                       ),
+                    ],
+                  )),
+                  Flexible(
+                    child: ButtonBar(
+                      alignment: MainAxisAlignment.center,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.skip_previous),
+                          onPressed: () {},
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.play_circle_fill),
+                          iconSize: 48,
+                          onPressed: () {},
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.skip_next),
+                          onPressed: () {},
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Flexible(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                IconButton(
-                                  icon: Icon(Icons.shuffle),
-                                  iconSize: 20,
-                                  onPressed: () {},
-                                ),
-                                const SizedBox(
-                                  width: 5,
-                                ),
-                                IconButton(
-                                  icon: Icon(Icons.skip_previous),
-                                  iconSize: 20,
-                                  onPressed: () {},
-                                ),
-                                const SizedBox(
-                                  width: 5,
-                                ),
-                                ElevatedButton(
-                                  onPressed: () {},
-                                  child: Icon(Icons.play_arrow),
-                                ),
-                                const SizedBox(
-                                  width: 5,
-                                ),
-                                IconButton(
-                                  icon: Icon(Icons.skip_next),
-                                  iconSize: 20,
-                                  onPressed: () {},
-                                ),
-                                const SizedBox(
-                                  width: 5,
-                                ),
-                                IconButton(
-                                  icon: Icon(Icons.repeat),
-                                  iconSize: 20,
-                                  onPressed: () {},
-                                ),
-                              ],
-                            ),
-                          ),
-                          Expanded(
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 600),
-                              child: Row(
-                                children: [
-                                  const Text("00:00",
-                                      textAlign: TextAlign.end,
-                                      style: TextStyle(fontSize: 12)),
-                                  Expanded(
-                                    child: SliderTheme(
-                                      data: SliderTheme.of(context).copyWith(
-                                        overlayShape:
-                                            const RoundSliderOverlayShape(
-                                                overlayRadius: 10),
-                                        trackShape:
-                                            const RoundedRectSliderTrackShape(),
-                                        trackHeight: 2,
-                                        thumbShape: const RoundSliderThumbShape(
-                                            enabledThumbRadius: 2),
-                                      ),
-                                      child: Slider.adaptive(
-                                        value: 0.5,
-                                        max: const Duration(
-                                                minutes: 3, seconds: 37)
-                                            .inMilliseconds
-                                            .toDouble(),
-                                        min: 0,
-                                        divisions: const Duration(
-                                                minutes: 3, seconds: 37)
-                                            .inMilliseconds,
-                                        onChanged: (double value) {},
-                                      ),
-                                    ),
-                                  ),
-                                  const Text("03:37",
-                                      textAlign: TextAlign.start,
-                                      style: TextStyle(fontSize: 12)),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Flexible(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          IconButton(
-                            icon: Icon(Icons.volume_up),
+                  ),
+                  Flexible(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        IconButton(
                             onPressed: () {},
+                            icon: const Icon(Icons.volume_up)),
+                        SizedBox(
+                          width: 4,
+                        ),
+                        SliderTheme(
+                          data: nakedSliderThemeData(),
+                          child: Slider(
+                            min: 0,
+                            max: 100,
+                            divisions: 100,
+                            value: volumeSliderValue.toDouble(),
+                            onChanged: (value) {
+                              setState(() {
+                                volumeSliderValue = value.toInt();
+                              });
+                            },
                           ),
-                          Container(
-                            constraints: const BoxConstraints(maxWidth: 100),
-                            child: SliderTheme(
-                              data: SliderTheme.of(context).copyWith(
-                                overlayShape: const RoundSliderOverlayShape(
-                                    overlayRadius: 10),
-                                trackShape: const RoundedRectSliderTrackShape(),
-                                trackHeight: 2,
-                                thumbShape: const RoundSliderThumbShape(
-                                    enabledThumbRadius: 2),
-                              ),
-                              child: Slider.adaptive(
-                                value: 50,
-                                max: 100,
-                                min: 0,
-                                divisions: 100,
-                                onChanged: (double value) {},
-                              ),
-                            ),
-                          ),
-                          ButtonBar(
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.queue_music),
-                                onPressed: () {},
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.playlist_play),
-                                onPressed: () {},
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+                        ),
+                        SizedBox(
+                          width: 8,
+                        ),
+                        IconButton(
+                            onPressed: () {}, icon: const Icon(Icons.settings)),
+                      ],
                     ),
-                  ],
-                ),
-              )
-            ],
-          ),
+                  ),
+                ],
+              ),
+            )
+          ],
         ),
       ),
+    );
+  }
+
+  SuperListView trackList() {
+    return SuperListView(
+      padding: const EdgeInsets.only(top: 10),
+      primary: true,
+      scrollDirection: Axis.vertical,
+      children: [
+        ...List.generate(
+            2000,
+            (index) => ListTile(
+                  leading: ClipRRect(
+                    borderRadius: BorderRadius.all(Radius.circular(4)),
+                    child: const Image(
+                      image: NetworkImage(
+                          "https://f4.bcbits.com/img/a3247117645_10.jpg"),
+                      filterQuality: FilterQuality.medium,
+                    ),
+                  ),
+                  title: Text('HUG AND KILL'),
+                  subtitle: Text(
+                    'Kobaryo',
+                  ),
+                  dense: true,
+                  trailing: Text('03:37'),
+                  onTap: () {},
+                )),
+      ],
+    );
+  }
+
+  SliderThemeData nakedSliderThemeData() {
+    return const SliderThemeData(
+      trackHeight: 2,
+      thumbShape:
+          RoundSliderThumbShape(enabledThumbRadius: 2, pressedElevation: 0),
+      overlayShape: RoundSliderOverlayShape(overlayRadius: 0),
     );
   }
 }
