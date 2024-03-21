@@ -5,8 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
-import 'package:marquee/marquee.dart';
+import 'package:ncudio/src/rust/api/simple.dart';
 import 'package:ncudio/src/rust/frb_generated.dart';
+import 'package:ncudio/src/rust/model.dart';
 import 'package:super_sliver_list/super_sliver_list.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -39,6 +40,9 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
+
+    initialzeApp();
+    initializeDb();
   }
 
   @override
@@ -204,7 +208,17 @@ class _MyAppState extends State<MyApp> {
                           width: 8,
                         ),
                         IconButton(
-                            onPressed: () {}, icon: const Icon(Icons.settings)),
+                            onPressed: () {
+                              pickDirectory().then(
+                                (value) {
+                                  if (value != null) {
+                                    syncDirectory(mountPoint: value)
+                                        .whenComplete(() => setState(() {}));
+                                  }
+                                },
+                              );
+                            },
+                            icon: const Icon(Icons.folder)),
                       ],
                     ),
                   ),
@@ -217,32 +231,55 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
-  SuperListView trackList() {
-    return SuperListView(
-      padding: const EdgeInsets.only(top: 10),
-      primary: true,
-      scrollDirection: Axis.vertical,
-      children: [
-        ...List.generate(
-            2000,
-            (index) => ListTile(
-                  leading: ClipRRect(
-                    borderRadius: BorderRadius.all(Radius.circular(4)),
-                    child: const Image(
-                      image: NetworkImage(
-                          "https://f4.bcbits.com/img/a3247117645_10.jpg"),
-                      filterQuality: FilterQuality.medium,
-                    ),
-                  ),
-                  title: Text('HUG AND KILL'),
-                  subtitle: Text(
-                    'Kobaryo',
-                  ),
-                  dense: true,
-                  trailing: Text('03:37'),
-                  onTap: () {},
-                )),
-      ],
+  FutureBuilder<List<Track>> trackList() {
+    return FutureBuilder(
+      future: getAllTracks(),
+      builder: (BuildContext context, AsyncSnapshot<List<Track>> snapshot) {
+        if (snapshot.connectionState == ConnectionState.done) {
+          if (snapshot.hasError) {
+            return Text('Error: ${snapshot.error}');
+          }
+
+          if (snapshot.data == null) {
+            return const Center(child: Text('The tracks are in the void'));
+          }
+
+          if (snapshot.data!.isEmpty) {
+            return const Center(child: Text('No tracks found'));
+          }
+
+          return SuperListView.builder(
+            itemCount: snapshot.data!.length,
+            itemBuilder: (BuildContext context, int index) {
+              return ListTile(
+                leading: ClipRRect(
+                  borderRadius: const BorderRadius.all(Radius.circular(4)),
+                  child: snapshot.data![index].pictureId != null
+                      ? Image.file(
+                          File(
+                              "${getCachePath()}/${snapshot.data![index].pictureId!}.jpg"),
+                          filterQuality: FilterQuality.medium,
+                          fit: BoxFit.cover)
+                      : AspectRatio(
+                          aspectRatio: 1,
+                          child: Container(
+                            color: Colors.grey,
+                            child: const Icon(Icons.music_note),
+                          )),
+                ),
+                title: Text(snapshot.data![index].title ?? 'Unknown Track'),
+                subtitle:
+                    Text(snapshot.data![index].artist ?? 'Unknown Artist'),
+                onTap: () {
+                  print(snapshot.data![index].file);
+                },
+              );
+            },
+          );
+        } else {
+          return const Center(child: CircularProgressIndicator());
+        }
+      },
     );
   }
 

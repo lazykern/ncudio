@@ -4,7 +4,31 @@
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
 import '../frb_generated.dart';
+import '../model.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-String greet({required String name, dynamic hint}) =>
-    RustLib.instance.api.greet(name: name, hint: hint);
+String getDbUrl({dynamic hint}) => RustLib.instance.api.getDbUrl(hint: hint);
+
+String getConfigPath({dynamic hint}) =>
+    RustLib.instance.api.getConfigPath(hint: hint);
+
+String getCachePath({dynamic hint}) =>
+    RustLib.instance.api.getCachePath(hint: hint);
+
+String getDataPath({dynamic hint}) =>
+    RustLib.instance.api.getDataPath(hint: hint);
+
+void initialzeApp({dynamic hint}) =>
+    RustLib.instance.api.initialzeApp(hint: hint);
+
+void initializeDb({dynamic hint}) =>
+    RustLib.instance.api.initializeDb(hint: hint);
+
+Future<void> syncDirectory({required String mountPoint, dynamic hint}) =>
+    RustLib.instance.api.syncDirectory(mountPoint: mountPoint, hint: hint);
+
+Future<List<Track>> getAllTracks({dynamic hint}) =>
+    RustLib.instance.api.getAllTracks(hint: hint);
+
+Future<String?> pickDirectory({dynamic hint}) =>
+    RustLib.instance.api.pickDirectory(hint: hint);
