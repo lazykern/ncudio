@@ -1,0 +1,29 @@
+[package]
+name = "rust_lib_ncudio"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "staticlib"]
+
+[features]
+default = ["tls-rustls"]
+tls-rustls=["rbdc/tls-rustls"]
+tls-native-tls=["rbdc/tls-native-tls"]
+rbdc = ["dep:rbdc"]
+
+[dependencies]
+flutter_rust_bridge = "=2.0.0-dev.28"
+
+rbs = "4.5"
+rbdc = { version = "4.5", default-features = false, optional = true }
+rbatis = { version = "4.5"}
+rbdc-sqlite = { version = "4.5" }
+
+fastdate = { version = "0.3" }
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+log = "0.4"
+fast_log = "1.6"
+once_cell = "1.19.0"
+dirs = "5.0.1"
