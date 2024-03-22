@@ -129,14 +129,15 @@ fn parse_music_file<P: AsRef<std::path::Path>>(path: P, mount_point: &P) -> Opti
     new_track.album = tag.album().map(|s| s.to_string());
 
     if let Some(picture) = tag.pictures().first() {
-        let picture_id = fasthash::xx::hash32(picture.data());
-        let mut picture_path = PathBuf::from(CACHE_PATH).join(picture_id.to_string());
+        let picture_id_digest = md5::compute(picture.data());
+        let picture_id = format!("{:x}", picture_id_digest);
+        let mut picture_path = PathBuf::from(CACHE_PATH).join(&picture_id);
 
         picture_path.set_extension("jpg");
         fs::write(&picture_path, picture.data()).ok();
 
         if picture_path.exists() {
-            new_track.picture_id = Some(picture_id.to_string());
+            new_track.picture_id = Some(picture_id);
         }
     }
 
