@@ -1,0 +1,13 @@
+/home/lazykern/Workspaces/ncudio/migration/target/debug/deps/liblog-2305a8e2968b4b63.rmeta: /home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/log-0.4.21/src/lib.rs /home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/log-0.4.21/src/macros.rs /home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/log-0.4.21/src/serde.rs /home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/log-0.4.21/src/kv/mod.rs /home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/log-0.4.21/src/kv/error.rs /home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/log-0.4.21/src/kv/key.rs /home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/log-0.4.21/src/kv/source.rs /home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/log-0.4.21/src/kv/value.rs /home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/log-0.4.21/src/__private_api.rs
+
+/home/lazykern/Workspaces/ncudio/migration/target/debug/deps/log-2305a8e2968b4b63.d: /home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/log-0.4.21/src/lib.rs /home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/log-0.4.21/src/macros.rs /home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/log-0.4.21/src/serde.rs /home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/log-0.4.21/src/kv/mod.rs /home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/log-0.4.21/src/kv/error.rs /home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/log-0.4.21/src/kv/key.rs /home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/log-0.4.21/src/kv/source.rs /home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/log-0.4.21/src/kv/value.rs /home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/log-0.4.21/src/__private_api.rs
+
+/home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/log-0.4.21/src/lib.rs:
+/home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/log-0.4.21/src/macros.rs:
+/home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/log-0.4.21/src/serde.rs:
+/home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/log-0.4.21/src/kv/mod.rs:
+/home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/log-0.4.21/src/kv/error.rs:
+/home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/log-0.4.21/src/kv/key.rs:
+/home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/log-0.4.21/src/kv/source.rs:
+/home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/log-0.4.21/src/kv/value.rs:
+/home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/log-0.4.21/src/__private_api.rs:

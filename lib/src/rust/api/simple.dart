@@ -4,8 +4,9 @@
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
 import '../frb_generated.dart';
-import '../model.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
+
+// The type `TrackData` is not used by any `pub` functions, thus it is ignored.
 
 String getDbUrl({dynamic hint}) => RustLib.instance.api.getDbUrl(hint: hint);
 
@@ -18,17 +19,57 @@ String getCachePath({dynamic hint}) =>
 String getDataPath({dynamic hint}) =>
     RustLib.instance.api.getDataPath(hint: hint);
 
-void initialzeApp({dynamic hint}) =>
+Future<void> initialzeApp({dynamic hint}) =>
     RustLib.instance.api.initialzeApp(hint: hint);
 
-void initializeDb({dynamic hint}) =>
-    RustLib.instance.api.initializeDb(hint: hint);
+Future<String?> pickDirectory({dynamic hint}) =>
+    RustLib.instance.api.pickDirectory(hint: hint);
 
 Future<void> syncDirectory({required String mountPoint, dynamic hint}) =>
     RustLib.instance.api.syncDirectory(mountPoint: mountPoint, hint: hint);
 
-Future<List<Track>> getAllTracks({dynamic hint}) =>
+Future<List<TrackDTO>> getAllTracks({dynamic hint}) =>
     RustLib.instance.api.getAllTracks(hint: hint);
 
-Future<String?> pickDirectory({dynamic hint}) =>
-    RustLib.instance.api.pickDirectory(hint: hint);
+class TrackDTO {
+  final String? title;
+  final String? album;
+  final String? artist;
+  final int duration;
+  final String filePath;
+  final String? pictureId;
+  final String mountPoint;
+
+  const TrackDTO({
+    this.title,
+    this.album,
+    this.artist,
+    required this.duration,
+    required this.filePath,
+    this.pictureId,
+    required this.mountPoint,
+  });
+
+  @override
+  int get hashCode =>
+      title.hashCode ^
+      album.hashCode ^
+      artist.hashCode ^
+      duration.hashCode ^
+      filePath.hashCode ^
+      pictureId.hashCode ^
+      mountPoint.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is TrackDTO &&
+          runtimeType == other.runtimeType &&
+          title == other.title &&
+          album == other.album &&
+          artist == other.artist &&
+          duration == other.duration &&
+          filePath == other.filePath &&
+          pictureId == other.pictureId &&
+          mountPoint == other.mountPoint;
+}

@@ -1,6 +1,7 @@
 {
     "rust-analyzer.linkedProjects": [
         "./native/Cargo.toml",
+        "./native/migration/Cargo.toml",
     ],
     "rust-analyzer.showUnlinkedFileNotification": false
 }

@@ -1,0 +1,9 @@
+/home/lazykern/Workspaces/ncudio/migration/target/debug/deps/libsea_query_derive-7a5d704b39ef706b.so: /home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/sea-query-derive-0.4.1/src/lib.rs /home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/sea-query-derive-0.4.1/src/error.rs /home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/sea-query-derive-0.4.1/src/iden_attr.rs /home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/sea-query-derive-0.4.1/src/iden_path.rs /home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/sea-query-derive-0.4.1/src/iden_variant.rs
+
+/home/lazykern/Workspaces/ncudio/migration/target/debug/deps/sea_query_derive-7a5d704b39ef706b.d: /home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/sea-query-derive-0.4.1/src/lib.rs /home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/sea-query-derive-0.4.1/src/error.rs /home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/sea-query-derive-0.4.1/src/iden_attr.rs /home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/sea-query-derive-0.4.1/src/iden_path.rs /home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/sea-query-derive-0.4.1/src/iden_variant.rs
+
+/home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/sea-query-derive-0.4.1/src/lib.rs:
+/home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/sea-query-derive-0.4.1/src/error.rs:
+/home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/sea-query-derive-0.4.1/src/iden_attr.rs:
+/home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/sea-query-derive-0.4.1/src/iden_path.rs:
+/home/lazykern/.cargo/registry/src/index.crates.io-6f17d22bba15001f/sea-query-derive-0.4.1/src/iden_variant.rs:

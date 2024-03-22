@@ -6,6 +6,7 @@ import 'package:flutter/painting.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:ncudio/src/rust/api/simple.dart';
+import 'package:ncudio/src/rust/entity/track.dart' as track_entity;
 import 'package:ncudio/src/rust/frb_generated.dart';
 import 'package:ncudio/src/rust/model.dart';
 import 'package:super_sliver_list/super_sliver_list.dart';
@@ -42,7 +43,6 @@ class _MyAppState extends State<MyApp> {
     super.initState();
 
     initialzeApp();
-    initializeDb();
   }
 
   @override
@@ -231,10 +231,10 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
-  FutureBuilder<List<Track>> trackList() {
+  FutureBuilder<List<TrackDTO>> trackList() {
     return FutureBuilder(
       future: getAllTracks(),
-      builder: (BuildContext context, AsyncSnapshot<List<Track>> snapshot) {
+      builder: (BuildContext context, AsyncSnapshot<List<TrackDTO>> snapshot) {
         if (snapshot.connectionState == ConnectionState.done) {
           if (snapshot.hasError) {
             return Text('Error: ${snapshot.error}');
@@ -271,7 +271,7 @@ class _MyAppState extends State<MyApp> {
                 subtitle:
                     Text(snapshot.data![index].artist ?? 'Unknown Artist'),
                 onTap: () {
-                  print(snapshot.data![index].file);
+                  print(snapshot.data![index].filePath);
                 },
               );
             },
