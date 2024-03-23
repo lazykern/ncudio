@@ -4,8 +4,9 @@
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
 import '../frb_generated.dart';
-import '../model.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
+
+// The type `ParsedTrack` is not used by any `pub` functions, thus it is ignored.
 
 String getDbUrl({dynamic hint}) => RustLib.instance.api.getDbUrl(hint: hint);
 
@@ -27,8 +28,58 @@ void initializeDb({dynamic hint}) =>
 Future<void> syncDirectory({required String mountPoint, dynamic hint}) =>
     RustLib.instance.api.syncDirectory(mountPoint: mountPoint, hint: hint);
 
-Future<List<Track>> getAllTracks({dynamic hint}) =>
+Future<List<TrackDTO>> getAllTracks({dynamic hint}) =>
     RustLib.instance.api.getAllTracks(hint: hint);
+
+Future<void> deleteAllTracks({dynamic hint}) =>
+    RustLib.instance.api.deleteAllTracks(hint: hint);
 
 Future<String?> pickDirectory({dynamic hint}) =>
     RustLib.instance.api.pickDirectory(hint: hint);
+
+class TrackDTO {
+  final int id;
+  final String? title;
+  final String? artist;
+  final String? album;
+  final int durationMs;
+  final String location;
+  final String mountPoint;
+  final String? pictureId;
+
+  const TrackDTO({
+    required this.id,
+    this.title,
+    this.artist,
+    this.album,
+    required this.durationMs,
+    required this.location,
+    required this.mountPoint,
+    this.pictureId,
+  });
+
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      title.hashCode ^
+      artist.hashCode ^
+      album.hashCode ^
+      durationMs.hashCode ^
+      location.hashCode ^
+      mountPoint.hashCode ^
+      pictureId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is TrackDTO &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          title == other.title &&
+          artist == other.artist &&
+          album == other.album &&
+          durationMs == other.durationMs &&
+          location == other.location &&
+          mountPoint == other.mountPoint &&
+          pictureId == other.pictureId;
+}

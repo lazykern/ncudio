@@ -57,6 +57,14 @@ class _MyAppState extends State<MyApp> {
               border: InputBorder.none,
             ),
           ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.delete_forever),
+              onPressed: () {
+                deleteAllTracks().whenComplete(() => setState(() {}));
+              },
+            ),
+          ],
         ),
         body: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -231,10 +239,10 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
-  FutureBuilder<List<Track>> trackList() {
+  FutureBuilder<List<TrackDTO>> trackList() {
     return FutureBuilder(
       future: getAllTracks(),
-      builder: (BuildContext context, AsyncSnapshot<List<Track>> snapshot) {
+      builder: (BuildContext context, AsyncSnapshot<List<TrackDTO>> snapshot) {
         if (snapshot.connectionState == ConnectionState.done) {
           if (snapshot.hasError) {
             return Text('Error: ${snapshot.error}');
@@ -271,7 +279,7 @@ class _MyAppState extends State<MyApp> {
                 subtitle:
                     Text(snapshot.data![index].artist ?? 'Unknown Artist'),
                 onTap: () {
-                  print(snapshot.data![index].file);
+                  print(snapshot.data![index].location);
                 },
               );
             },

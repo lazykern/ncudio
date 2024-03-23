@@ -38,6 +38,37 @@ flutter_rust_bridge::frb_generated_default_handler!();
 
 // Section: wire_funcs
 
+fn wire_delete_all_tracks_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "delete_all_tracks",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            move |context| {
+                transform_result_sse((move || {
+                    Result::<_, ()>::Ok(crate::api::simple::delete_all_tracks())
+                })())
+            }
+        },
+    )
+}
 fn wire_frb_init_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -334,15 +365,6 @@ fn wire_sync_directory_impl(
 
 // Section: dart2rust
 
-impl SseDecode for chrono::NaiveDateTime {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
-        let mut inner = <i64>::sse_decode(deserializer);
-        return chrono::NaiveDateTime::from_timestamp_micros(inner)
-            .expect("invalid or out-of-range datetime");
-    }
-}
-
 impl SseDecode for String {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -358,13 +380,6 @@ impl SseDecode for i32 {
     }
 }
 
-impl SseDecode for i64 {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
-        deserializer.cursor.read_i64::<NativeEndian>().unwrap()
-    }
-}
-
 impl SseDecode for Vec<u8> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -377,13 +392,13 @@ impl SseDecode for Vec<u8> {
     }
 }
 
-impl SseDecode for Vec<crate::model::Track> {
+impl SseDecode for Vec<crate::api::simple::TrackDTO> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut len_ = <i32>::sse_decode(deserializer);
         let mut ans_ = vec![];
         for idx_ in 0..len_ {
-            ans_.push(<crate::model::Track>::sse_decode(deserializer));
+            ans_.push(<crate::api::simple::TrackDTO>::sse_decode(deserializer));
         }
         return ans_;
     }
@@ -400,30 +415,26 @@ impl SseDecode for Option<String> {
     }
 }
 
-impl SseDecode for crate::model::Track {
+impl SseDecode for crate::api::simple::TrackDTO {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_id = <i32>::sse_decode(deserializer);
-        let mut var_pictureId = <Option<String>>::sse_decode(deserializer);
         let mut var_title = <Option<String>>::sse_decode(deserializer);
         let mut var_artist = <Option<String>>::sse_decode(deserializer);
         let mut var_album = <Option<String>>::sse_decode(deserializer);
         let mut var_durationMs = <i32>::sse_decode(deserializer);
-        let mut var_file = <String>::sse_decode(deserializer);
-        let mut var_directory = <String>::sse_decode(deserializer);
+        let mut var_location = <String>::sse_decode(deserializer);
         let mut var_mountPoint = <String>::sse_decode(deserializer);
-        let mut var_createdAt = <chrono::NaiveDateTime>::sse_decode(deserializer);
-        return crate::model::Track {
+        let mut var_pictureId = <Option<String>>::sse_decode(deserializer);
+        return crate::api::simple::TrackDTO {
             id: var_id,
-            picture_id: var_pictureId,
             title: var_title,
             artist: var_artist,
             album: var_album,
             duration_ms: var_durationMs,
-            file: var_file,
-            directory: var_directory,
+            location: var_location,
             mount_point: var_mountPoint,
-            created_at: var_createdAt,
+            picture_id: var_pictureId,
         };
     }
 }
@@ -456,9 +467,10 @@ fn pde_ffi_dispatcher_primary_impl(
 ) {
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
+        10 => wire_delete_all_tracks_impl(port, ptr, rust_vec_len, data_len),
         5 => wire_frb_init_impl(port, ptr, rust_vec_len, data_len),
         9 => wire_get_all_tracks_impl(port, ptr, rust_vec_len, data_len),
-        10 => wire_pick_directory_impl(port, ptr, rust_vec_len, data_len),
+        11 => wire_pick_directory_impl(port, ptr, rust_vec_len, data_len),
         8 => wire_sync_directory_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
@@ -485,34 +497,27 @@ fn pde_ffi_dispatcher_sync_impl(
 // Section: rust2dart
 
 // Codec=Dco (DartCObject based), see doc to use other codecs
-impl flutter_rust_bridge::IntoDart for crate::model::Track {
+impl flutter_rust_bridge::IntoDart for crate::api::simple::TrackDTO {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
             self.id.into_into_dart().into_dart(),
-            self.picture_id.into_into_dart().into_dart(),
             self.title.into_into_dart().into_dart(),
             self.artist.into_into_dart().into_dart(),
             self.album.into_into_dart().into_dart(),
             self.duration_ms.into_into_dart().into_dart(),
-            self.file.into_into_dart().into_dart(),
-            self.directory.into_into_dart().into_dart(),
+            self.location.into_into_dart().into_dart(),
             self.mount_point.into_into_dart().into_dart(),
-            self.created_at.into_into_dart().into_dart(),
+            self.picture_id.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
 }
-impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::model::Track {}
-impl flutter_rust_bridge::IntoIntoDart<crate::model::Track> for crate::model::Track {
-    fn into_into_dart(self) -> crate::model::Track {
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::simple::TrackDTO {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::simple::TrackDTO>
+    for crate::api::simple::TrackDTO
+{
+    fn into_into_dart(self) -> crate::api::simple::TrackDTO {
         self
-    }
-}
-
-impl SseEncode for chrono::NaiveDateTime {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        <i64>::sse_encode(self.timestamp_micros(), serializer);
     }
 }
 
@@ -530,13 +535,6 @@ impl SseEncode for i32 {
     }
 }
 
-impl SseEncode for i64 {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        serializer.cursor.write_i64::<NativeEndian>(self).unwrap();
-    }
-}
-
 impl SseEncode for Vec<u8> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -547,12 +545,12 @@ impl SseEncode for Vec<u8> {
     }
 }
 
-impl SseEncode for Vec<crate::model::Track> {
+impl SseEncode for Vec<crate::api::simple::TrackDTO> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <i32>::sse_encode(self.len() as _, serializer);
         for item in self {
-            <crate::model::Track>::sse_encode(item, serializer);
+            <crate::api::simple::TrackDTO>::sse_encode(item, serializer);
         }
     }
 }
@@ -567,19 +565,17 @@ impl SseEncode for Option<String> {
     }
 }
 
-impl SseEncode for crate::model::Track {
+impl SseEncode for crate::api::simple::TrackDTO {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <i32>::sse_encode(self.id, serializer);
-        <Option<String>>::sse_encode(self.picture_id, serializer);
         <Option<String>>::sse_encode(self.title, serializer);
         <Option<String>>::sse_encode(self.artist, serializer);
         <Option<String>>::sse_encode(self.album, serializer);
         <i32>::sse_encode(self.duration_ms, serializer);
-        <String>::sse_encode(self.file, serializer);
-        <String>::sse_encode(self.directory, serializer);
+        <String>::sse_encode(self.location, serializer);
         <String>::sse_encode(self.mount_point, serializer);
-        <chrono::NaiveDateTime>::sse_encode(self.created_at, serializer);
+        <Option<String>>::sse_encode(self.picture_id, serializer);
     }
 }
 

@@ -8,7 +8,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:ffi' as ffi;
 import 'frb_generated.dart';
-import 'model.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_io.dart';
 
 abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
@@ -20,28 +19,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   });
 
   @protected
-  DateTime dco_decode_Chrono_Naive(dynamic raw);
-
-  @protected
   String dco_decode_String(dynamic raw);
 
   @protected
   int dco_decode_i_32(dynamic raw);
 
   @protected
-  int dco_decode_i_64(dynamic raw);
-
-  @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
 
   @protected
-  List<Track> dco_decode_list_track(dynamic raw);
+  List<TrackDTO> dco_decode_list_track_dto(dynamic raw);
 
   @protected
   String? dco_decode_opt_String(dynamic raw);
 
   @protected
-  Track dco_decode_track(dynamic raw);
+  TrackDTO dco_decode_track_dto(dynamic raw);
 
   @protected
   int dco_decode_u_8(dynamic raw);
@@ -50,28 +43,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void dco_decode_unit(dynamic raw);
 
   @protected
-  DateTime sse_decode_Chrono_Naive(SseDeserializer deserializer);
-
-  @protected
   String sse_decode_String(SseDeserializer deserializer);
 
   @protected
   int sse_decode_i_32(SseDeserializer deserializer);
 
   @protected
-  int sse_decode_i_64(SseDeserializer deserializer);
-
-  @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
 
   @protected
-  List<Track> sse_decode_list_track(SseDeserializer deserializer);
+  List<TrackDTO> sse_decode_list_track_dto(SseDeserializer deserializer);
 
   @protected
   String? sse_decode_opt_String(SseDeserializer deserializer);
 
   @protected
-  Track sse_decode_track(SseDeserializer deserializer);
+  TrackDTO sse_decode_track_dto(SseDeserializer deserializer);
 
   @protected
   int sse_decode_u_8(SseDeserializer deserializer);
@@ -83,29 +70,23 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   bool sse_decode_bool(SseDeserializer deserializer);
 
   @protected
-  void sse_encode_Chrono_Naive(DateTime self, SseSerializer serializer);
-
-  @protected
   void sse_encode_String(String self, SseSerializer serializer);
 
   @protected
   void sse_encode_i_32(int self, SseSerializer serializer);
 
   @protected
-  void sse_encode_i_64(int self, SseSerializer serializer);
-
-  @protected
   void sse_encode_list_prim_u_8_strict(
       Uint8List self, SseSerializer serializer);
 
   @protected
-  void sse_encode_list_track(List<Track> self, SseSerializer serializer);
+  void sse_encode_list_track_dto(List<TrackDTO> self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_String(String? self, SseSerializer serializer);
 
   @protected
-  void sse_encode_track(Track self, SseSerializer serializer);
+  void sse_encode_track_dto(TrackDTO self, SseSerializer serializer);
 
   @protected
   void sse_encode_u_8(int self, SseSerializer serializer);

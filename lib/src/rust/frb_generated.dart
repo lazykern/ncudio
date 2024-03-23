@@ -7,7 +7,6 @@ import 'api/simple.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'frb_generated.io.dart' if (dart.library.html) 'frb_generated.web.dart';
-import 'model.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 /// Main entrypoint of the Rust API
@@ -65,9 +64,11 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 }
 
 abstract class RustLibApi extends BaseApi {
+  Future<void> deleteAllTracks({dynamic hint});
+
   Future<void> frbInit({dynamic hint});
 
-  Future<List<Track>> getAllTracks({dynamic hint});
+  Future<List<TrackDTO>> getAllTracks({dynamic hint});
 
   String getCachePath({dynamic hint});
 
@@ -95,6 +96,30 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   });
 
   @override
+  Future<void> deleteAllTracks({dynamic hint}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 10, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: null,
+      ),
+      constMeta: kDeleteAllTracksConstMeta,
+      argValues: [],
+      apiImpl: this,
+      hint: hint,
+    ));
+  }
+
+  TaskConstMeta get kDeleteAllTracksConstMeta => const TaskConstMeta(
+        debugName: "delete_all_tracks",
+        argNames: [],
+      );
+
+  @override
   Future<void> frbInit({dynamic hint}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
@@ -119,7 +144,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<List<Track>> getAllTracks({dynamic hint}) {
+  Future<List<TrackDTO>> getAllTracks({dynamic hint}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
@@ -127,7 +152,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             funcId: 9, port: port_);
       },
       codec: SseCodec(
-        decodeSuccessData: sse_decode_list_track,
+        decodeSuccessData: sse_decode_list_track_dto,
         decodeErrorData: null,
       ),
       constMeta: kGetAllTracksConstMeta,
@@ -286,7 +311,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 10, port: port_);
+            funcId: 11, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_opt_String,
@@ -330,12 +355,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @protected
-  DateTime dco_decode_Chrono_Naive(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return dcoDecodeTimestamp(ts: dco_decode_i_64(raw).toInt(), isUtc: true);
-  }
-
-  @protected
   String dco_decode_String(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as String;
@@ -348,21 +367,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  int dco_decode_i_64(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return dcoDecodeI64OrU64(raw);
-  }
-
-  @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as Uint8List;
   }
 
   @protected
-  List<Track> dco_decode_list_track(dynamic raw) {
+  List<TrackDTO> dco_decode_list_track_dto(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
-    return (raw as List<dynamic>).map(dco_decode_track).toList();
+    return (raw as List<dynamic>).map(dco_decode_track_dto).toList();
   }
 
   @protected
@@ -372,22 +385,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  Track dco_decode_track(dynamic raw) {
+  TrackDTO dco_decode_track_dto(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 10)
-      throw Exception('unexpected arr length: expect 10 but see ${arr.length}');
-    return Track(
+    if (arr.length != 8)
+      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
+    return TrackDTO(
       id: dco_decode_i_32(arr[0]),
-      pictureId: dco_decode_opt_String(arr[1]),
-      title: dco_decode_opt_String(arr[2]),
-      artist: dco_decode_opt_String(arr[3]),
-      album: dco_decode_opt_String(arr[4]),
-      durationMs: dco_decode_i_32(arr[5]),
-      file: dco_decode_String(arr[6]),
-      directory: dco_decode_String(arr[7]),
-      mountPoint: dco_decode_String(arr[8]),
-      createdAt: dco_decode_Chrono_Naive(arr[9]),
+      title: dco_decode_opt_String(arr[1]),
+      artist: dco_decode_opt_String(arr[2]),
+      album: dco_decode_opt_String(arr[3]),
+      durationMs: dco_decode_i_32(arr[4]),
+      location: dco_decode_String(arr[5]),
+      mountPoint: dco_decode_String(arr[6]),
+      pictureId: dco_decode_opt_String(arr[7]),
     );
   }
 
@@ -404,13 +415,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  DateTime sse_decode_Chrono_Naive(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    var inner = sse_decode_i_64(deserializer);
-    return DateTime.fromMicrosecondsSinceEpoch(inner, isUtc: true);
-  }
-
-  @protected
   String sse_decode_String(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var inner = sse_decode_list_prim_u_8_strict(deserializer);
@@ -424,12 +428,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  int sse_decode_i_64(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return deserializer.buffer.getInt64();
-  }
-
-  @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var len_ = sse_decode_i_32(deserializer);
@@ -437,13 +435,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  List<Track> sse_decode_list_track(SseDeserializer deserializer) {
+  List<TrackDTO> sse_decode_list_track_dto(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
     var len_ = sse_decode_i_32(deserializer);
-    var ans_ = <Track>[];
+    var ans_ = <TrackDTO>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
-      ans_.add(sse_decode_track(deserializer));
+      ans_.add(sse_decode_track_dto(deserializer));
     }
     return ans_;
   }
@@ -460,29 +458,25 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  Track sse_decode_track(SseDeserializer deserializer) {
+  TrackDTO sse_decode_track_dto(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_id = sse_decode_i_32(deserializer);
-    var var_pictureId = sse_decode_opt_String(deserializer);
     var var_title = sse_decode_opt_String(deserializer);
     var var_artist = sse_decode_opt_String(deserializer);
     var var_album = sse_decode_opt_String(deserializer);
     var var_durationMs = sse_decode_i_32(deserializer);
-    var var_file = sse_decode_String(deserializer);
-    var var_directory = sse_decode_String(deserializer);
+    var var_location = sse_decode_String(deserializer);
     var var_mountPoint = sse_decode_String(deserializer);
-    var var_createdAt = sse_decode_Chrono_Naive(deserializer);
-    return Track(
+    var var_pictureId = sse_decode_opt_String(deserializer);
+    return TrackDTO(
         id: var_id,
-        pictureId: var_pictureId,
         title: var_title,
         artist: var_artist,
         album: var_album,
         durationMs: var_durationMs,
-        file: var_file,
-        directory: var_directory,
+        location: var_location,
         mountPoint: var_mountPoint,
-        createdAt: var_createdAt);
+        pictureId: var_pictureId);
   }
 
   @protected
@@ -503,12 +497,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void sse_encode_Chrono_Naive(DateTime self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_i_64(self.microsecondsSinceEpoch, serializer);
-  }
-
-  @protected
   void sse_encode_String(String self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_list_prim_u_8_strict(utf8.encoder.convert(self), serializer);
@@ -521,12 +509,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void sse_encode_i_64(int self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    serializer.buffer.putInt64(self);
-  }
-
-  @protected
   void sse_encode_list_prim_u_8_strict(
       Uint8List self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
@@ -535,11 +517,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void sse_encode_list_track(List<Track> self, SseSerializer serializer) {
+  void sse_encode_list_track_dto(
+      List<TrackDTO> self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
-      sse_encode_track(item, serializer);
+      sse_encode_track_dto(item, serializer);
     }
   }
 
@@ -554,18 +537,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void sse_encode_track(Track self, SseSerializer serializer) {
+  void sse_encode_track_dto(TrackDTO self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.id, serializer);
-    sse_encode_opt_String(self.pictureId, serializer);
     sse_encode_opt_String(self.title, serializer);
     sse_encode_opt_String(self.artist, serializer);
     sse_encode_opt_String(self.album, serializer);
     sse_encode_i_32(self.durationMs, serializer);
-    sse_encode_String(self.file, serializer);
-    sse_encode_String(self.directory, serializer);
+    sse_encode_String(self.location, serializer);
     sse_encode_String(self.mountPoint, serializer);
-    sse_encode_Chrono_Naive(self.createdAt, serializer);
+    sse_encode_opt_String(self.pictureId, serializer);
   }
 
   @protected
