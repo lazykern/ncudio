@@ -354,9 +354,13 @@ class _MyAppState extends State<MyApp> {
           onPressed: () {},
         ),
         IconButton(
-          icon: Icon(
-            player.playing ? Icons.pause : Icons.play_arrow,
-          ),
+          icon: StreamBuilder<bool>(
+              stream: player.playingStream,
+              builder: (context, snapshot) {
+                return Icon(snapshot.data != null && snapshot.data!
+                    ? Icons.pause
+                    : Icons.play_arrow);
+              }),
           onPressed: () {
             setState(() {
               togglePlayPause();
@@ -500,27 +504,23 @@ class _MyAppState extends State<MyApp> {
                     itemBuilder: (BuildContext context, int index) {
                       return ListTile(
                         dense: true,
-                        leading: Row(
-                          children: [
-                            AspectRatio(
-                              aspectRatio: 1,
-                              child: ClipRRect(
-                                borderRadius:
-                                    const BorderRadius.all(Radius.circular(4)),
-                                child: tracks[index].pictureId != null
-                                    ? Image.file(
-                                        File(
-                                            "${getCachePath()}/${tracks[index].pictureId!}.jpg"),
-                                        filterQuality: FilterQuality.medium,
-                                        cacheHeight: 48,
-                                        fit: BoxFit.cover)
-                                    : Container(
-                                        color: Colors.grey,
-                                        child: const Icon(Icons.music_note),
-                                      ),
-                              ),
-                            ),
-                          ],
+                        leading: AspectRatio(
+                          aspectRatio: 1,
+                          child: ClipRRect(
+                            borderRadius:
+                                const BorderRadius.all(Radius.circular(4)),
+                            child: tracks[index].pictureId != null
+                                ? Image.file(
+                                    File(
+                                        "${getCachePath()}/${tracks[index].pictureId!}.jpg"),
+                                    filterQuality: FilterQuality.medium,
+                                    cacheHeight: 48,
+                                    fit: BoxFit.cover)
+                                : Container(
+                                    color: Colors.grey,
+                                    child: const Icon(Icons.music_note),
+                                  ),
+                          ),
                         ),
                         title: Text(
                           tracks[index].title ?? 'Unknown Track',
