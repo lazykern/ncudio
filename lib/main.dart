@@ -8,6 +8,7 @@ import 'package:flutter/widgets.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_media_kit/just_audio_media_kit.dart';
 import 'package:ncudio/src/rust/api/simple.dart';
+import 'package:ncudio/src/rust/api/utils.dart';
 import 'package:ncudio/src/rust/frb_generated.dart';
 import 'package:super_sliver_list/super_sliver_list.dart';
 import 'package:window_manager/window_manager.dart';
@@ -400,12 +401,10 @@ class _MyAppState extends State<MyApp> {
             return const Center(child: Text('No tracks found'));
           }
 
-          final tracks = snapshot.data!.where((track) {
-            return (track.title?.toLowerCase().contains(searchQuery) ??
-                    false) ||
-                (track.artist?.toLowerCase().contains(searchQuery) ?? false) ||
-                (track.album?.toLowerCase().contains(searchQuery) ?? false);
-          }).toList();
+          final tracks = snapshot.data!
+              .where(
+                  (track) => trackQueryFilter(query: searchQuery, track: track))
+              .toList();
 
           return SuperListView.builder(
             itemCount: tracks.length,
