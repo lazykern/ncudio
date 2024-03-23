@@ -36,6 +36,8 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   int msSliderValue = 0;
   int volumeSliderValue = 50;
+  late Future<List<TrackDTO>> trackListFuture = getAllTracks();
+  String searchQuery = '';
 
   @override
   void initState() {
@@ -43,6 +45,8 @@ class _MyAppState extends State<MyApp> {
 
     initialzeApp();
     initializeDb();
+
+    trackListFuture = getAllTracks();
   }
 
   @override
@@ -50,12 +54,17 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
-          flexibleSpace: const TextField(
-            decoration: InputDecoration(
+          flexibleSpace: TextField(
+            decoration: const InputDecoration(
               hintText: 'Search',
               prefixIcon: Icon(Icons.search),
               border: InputBorder.none,
             ),
+            onChanged: (value) {
+              setState(() {
+                searchQuery = value.toLowerCase();
+              });
+            },
           ),
           actions: [
             IconButton(
@@ -241,7 +250,7 @@ class _MyAppState extends State<MyApp> {
 
   FutureBuilder<List<TrackDTO>> trackList() {
     return FutureBuilder(
-      future: getAllTracks(),
+      future: trackListFuture,
       builder: (BuildContext context, AsyncSnapshot<List<TrackDTO>> snapshot) {
         if (snapshot.connectionState == ConnectionState.done) {
           if (snapshot.hasError) {
@@ -256,16 +265,23 @@ class _MyAppState extends State<MyApp> {
             return const Center(child: Text('No tracks found'));
           }
 
+          final tracks = snapshot.data!.where((track) {
+            return (track.title?.toLowerCase().contains(searchQuery) ??
+                    false) ||
+                (track.artist?.toLowerCase().contains(searchQuery) ?? false) ||
+                (track.album?.toLowerCase().contains(searchQuery) ?? false);
+          }).toList();
+
           return SuperListView.builder(
-            itemCount: snapshot.data!.length,
+            itemCount: tracks.length,
             itemBuilder: (BuildContext context, int index) {
               return ListTile(
                 leading: ClipRRect(
                   borderRadius: const BorderRadius.all(Radius.circular(4)),
-                  child: snapshot.data![index].pictureId != null
+                  child: tracks![index].pictureId != null
                       ? Image.file(
                           File(
-                              "${getCachePath()}/${snapshot.data![index].pictureId!}.jpg"),
+                              "${getCachePath()}/${tracks[index].pictureId!}.jpg"),
                           filterQuality: FilterQuality.medium,
                           fit: BoxFit.cover)
                       : AspectRatio(
@@ -275,11 +291,12 @@ class _MyAppState extends State<MyApp> {
                             child: const Icon(Icons.music_note),
                           )),
                 ),
-                title: Text(snapshot.data![index].title ?? 'Unknown Track'),
-                subtitle:
-                    Text(snapshot.data![index].artist ?? 'Unknown Artist'),
+                title: Text(
+                  tracks[index].title ?? 'Unknown Track',
+                ),
+                subtitle: Text(tracks[index].artist ?? 'Unknown Artist'),
                 onTap: () {
-                  print(snapshot.data![index].location);
+                  print(tracks[index].location);
                 },
               );
             },
