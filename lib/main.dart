@@ -5,9 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:just_audio_media_kit/just_audio_media_kit.dart';
 import 'package:ncudio/src/rust/api/simple.dart';
 import 'package:ncudio/src/rust/frb_generated.dart';
-import 'package:ncudio/src/rust/model.dart';
 import 'package:super_sliver_list/super_sliver_list.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -23,6 +24,10 @@ Future<void> main() async {
     windowManager.setSize(const Size(800, 600));
   }
 
+  JustAudioMediaKit.ensureInitialized();
+  JustAudioMediaKit.title = 'ncudio';
+  JustAudioMediaKit.protocolWhitelist = const ['file'];
+
   runApp(const MyApp());
 }
 
@@ -34,10 +39,12 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  int msSliderValue = 0;
-  int volumeSliderValue = 50;
   late Future<List<TrackDTO>> trackListFuture = getAllTracks();
   String searchQuery = '';
+  final player = AudioPlayer();
+  TrackDTO? currentTrack;
+
+  late double lastVolume;
 
   ThemeMode themeMode = ThemeMode.system;
   bool get useLightMode {
@@ -53,12 +60,10 @@ class _MyAppState extends State<MyApp> {
   }
 
   ThemeData lightThemeData = ThemeData(
-    primarySwatch: Colors.blue,
     brightness: Brightness.light,
   );
 
   ThemeData darkThemeData = ThemeData(
-    primarySwatch: Colors.blue,
     brightness: Brightness.dark,
   );
 
@@ -69,7 +74,16 @@ class _MyAppState extends State<MyApp> {
     initialzeApp();
     initializeDb();
 
+    lastVolume = player.volume;
+
     trackListFuture = getAllTracks();
+  }
+
+  @override
+  void dispose() {
+    player.dispose();
+
+    super.dispose();
   }
 
   @override
@@ -93,23 +107,23 @@ class _MyAppState extends State<MyApp> {
             },
           ),
           actions: [
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              child: IconButton(
-                icon: Icon(
-                  themeMode == ThemeMode.light
-                      ? Icons.light_mode
-                      : Icons.dark_mode,
-                ),
-                onPressed: () {
-                  setState(() {
-                    themeMode = themeMode == ThemeMode.light
-                        ? ThemeMode.system
-                        : ThemeMode.light;
-                  });
-                },
+            volumeToggleButton(),
+            volumeSlider(),
+            IconButton(
+              icon: Icon(
+                themeMode == ThemeMode.light
+                    ? Icons.light_mode
+                    : Icons.dark_mode,
               ),
+              onPressed: () {
+                setState(() {
+                  themeMode = themeMode == ThemeMode.light
+                      ? ThemeMode.system
+                      : ThemeMode.light;
+                });
+              },
             ),
+            pickDirectoryButton(),
             IconButton(
               icon: const Icon(Icons.delete_forever),
               onPressed: () {
@@ -131,167 +145,242 @@ class _MyAppState extends State<MyApp> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: SliderTheme(
                 data: nakedSliderThemeData(),
-                child: Slider(
-                  min: 0,
-                  max: Duration(minutes: 3, seconds: 37)
-                      .inMilliseconds
-                      .toDouble(),
-                  value: msSliderValue.toDouble(),
-                  divisions: Duration(minutes: 3, seconds: 37).inMilliseconds,
-                  onChanged: (value) {
-                    setState(() {
-                      msSliderValue = value.toInt();
-                    });
-                  },
-                ),
+                child: StreamBuilder<Duration>(
+                    stream: player.positionStream,
+                    builder: (context, positionSnapshot) {
+                      return StreamBuilder<Duration?>(
+                          stream: player.durationStream,
+                          builder: (context, durationSnapshot) {
+                            var duration =
+                                durationSnapshot.data ?? Duration.zero;
+                            var position =
+                                positionSnapshot.data ?? Duration.zero;
+                            if (position > duration) {
+                              position = duration;
+                            }
+                            return Slider(
+                              min: 0,
+                              max: duration.inMilliseconds.toDouble(),
+                              value: position < Duration.zero
+                                  ? 0
+                                  : position.inMilliseconds.toDouble(),
+                              onChanged: (value) {
+                                player.seek(
+                                    Duration(milliseconds: value.toInt()));
+                              },
+                            );
+                          });
+                    }),
               ),
             ),
             Container(
               height: 96,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                      child: Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.all(Radius.circular(4)),
-                        child: Image(
-                          image: NetworkImage(
-                              "https://f4.bcbits.com/img/a3247117645_10.jpg"),
-                          filterQuality: FilterQuality.medium,
-                        ),
-                      ),
-                      SizedBox(
-                        width: 8,
-                      ),
-                      Flexible(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                                'HUG AND KIashdiuasdiouhajsoiudhasoidhoaijhdoiwLL',
-                                maxLines: 1,
-                                overflow: TextOverflow.fade,
-                                softWrap: false,
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold)),
-                            Text('Kobaryo',
-                                maxLines: 1,
-                                overflow: TextOverflow.fade,
-                                softWrap: false,
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.normal)),
-                            Text(
-                                "${Duration(milliseconds: msSliderValue).inMinutes}:${Duration(milliseconds: msSliderValue).inSeconds.remainder(60).toString().padLeft(2, '0')}/${Duration(minutes: 3, seconds: 37).inMinutes}:${Duration(minutes: 3, seconds: 37).inSeconds.remainder(60).toString().padLeft(2, '0')}",
-                                overflow: TextOverflow.fade,
-                                softWrap: false,
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.normal)),
-                          ],
-                        ),
-                      ),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SizedBox(
-                            height: 24,
-                            child: IconButton(
-                              icon: const Icon(Icons.favorite_border),
-                              padding: EdgeInsets.all(0.0),
-                              iconSize: 16,
-                              onPressed: () {},
-                            ),
-                          ),
-                          SizedBox(
-                            height: 24,
-                            child: IconButton(
-                              icon: const Icon(Icons.more_vert),
-                              padding: EdgeInsets.all(0.0),
-                              iconSize: 16,
-                              onPressed: () {},
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  )),
-                  Flexible(
-                    child: ButtonBar(
-                      alignment: MainAxisAlignment.center,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.skip_previous),
-                          onPressed: () {},
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.play_circle_fill),
-                          iconSize: 48,
-                          onPressed: () {},
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.skip_next),
-                          onPressed: () {},
-                        ),
-                      ],
-                    ),
-                  ),
-                  Flexible(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        IconButton(
-                            onPressed: () {},
-                            icon: const Icon(Icons.volume_up)),
-                        SizedBox(
-                          width: 4,
-                        ),
-                        SliderTheme(
-                          data: nakedSliderThemeData(),
-                          child: Slider(
-                            min: 0,
-                            max: 100,
-                            divisions: 100,
-                            value: volumeSliderValue.toDouble(),
-                            onChanged: (value) {
-                              setState(() {
-                                volumeSliderValue = value.toInt();
-                              });
-                            },
-                          ),
-                        ),
-                        SizedBox(
-                          width: 8,
-                        ),
-                        IconButton(
-                            onPressed: () {
-                              pickDirectory().then(
-                                (value) {
-                                  if (value != null) {
-                                    syncDirectory(mountPoint: value)
-                                        .whenComplete(() => setState(() {
-                                              trackListFuture = getAllTracks();
-                                            }));
-                                  }
-                                },
-                              );
-                            },
-                            icon: const Icon(Icons.folder)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+              child: buttomBar(),
             )
           ],
         ),
       ),
+    );
+  }
+
+  Row buttomBar() {
+    var lhs = player.audioSource != null
+        ? Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.all(Radius.circular(4)),
+                child: currentTrack?.pictureId != null
+                    ? Image.file(
+                        File(
+                            "${getCachePath()}/${currentTrack!.pictureId!}.jpg"),
+                        cacheHeight: 200,
+                        filterQuality: FilterQuality.medium,
+                        fit: BoxFit.cover)
+                    : AspectRatio(
+                        aspectRatio: 1,
+                        child: Container(
+                          color: Colors.grey,
+                          child: const Icon(Icons.music_note),
+                        ),
+                      ),
+              ),
+              SizedBox(
+                width: 8,
+              ),
+              Flexible(
+                child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SelectableText(currentTrack?.title ?? '',
+                          maxLines: 1,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            overflow: TextOverflow.fade,
+                          )),
+                      SelectableText(currentTrack?.artist ?? '',
+                          maxLines: 1,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.normal,
+                              overflow: TextOverflow.fade,
+                              fontSize: 12)),
+                      SelectableText(currentTrack?.album ?? '',
+                          maxLines: 1,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.normal,
+                            overflow: TextOverflow.fade,
+                            fontSize: 12,
+                          )),
+                      StreamBuilder<Duration?>(
+                          stream: player.durationStream,
+                          builder: (context, durationSnapshot) {
+                            return StreamBuilder<Duration>(
+                                stream: player.positionStream,
+                                builder: (context, positionSnapshot) {
+                                  var position =
+                                      positionSnapshot.data ?? Duration.zero;
+                                  final positionText = position.inHours > 0
+                                      ? '${position.inHours}:${position.inMinutes.remainder(60).toString().padLeft(2, '0')}:${position.inSeconds.remainder(60).toString().padLeft(2, '0')}'
+                                      : '${position.inMinutes}:${position.inSeconds.remainder(60).toString().padLeft(2, '0')}';
+
+                                  if (durationSnapshot.data == null) {
+                                    return Text(positionText);
+                                  }
+
+                                  var duration = durationSnapshot.data!;
+                                  final durationText = duration.inHours > 0
+                                      ? '${duration.inHours}:${duration.inMinutes.remainder(60).toString().padLeft(2, '0')}:${duration.inSeconds.remainder(60).toString().padLeft(2, '0')}'
+                                      : '${duration.inMinutes}:${duration.inSeconds.remainder(60).toString().padLeft(2, '0')}';
+
+                                  return Text('$positionText / $durationText');
+                                });
+                          }),
+                    ]),
+              ),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    height: 24,
+                    child: IconButton(
+                      icon: const Icon(Icons.favorite_border),
+                      padding: EdgeInsets.all(0.0),
+                      iconSize: 16,
+                      onPressed: () {},
+                    ),
+                  ),
+                  SizedBox(
+                    height: 24,
+                    child: IconButton(
+                      icon: const Icon(Icons.more_vert),
+                      padding: EdgeInsets.all(0.0),
+                      iconSize: 16,
+                      onPressed: () {},
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          )
+        : Container();
+    var mid = ButtonBar(
+      alignment: MainAxisAlignment.center,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.skip_previous),
+          onPressed: () {},
+        ),
+        IconButton(
+          icon: Icon(
+            player.playing ? Icons.pause : Icons.play_arrow,
+          ),
+          onPressed: () {
+            setState(() {
+              if (player.playing) {
+                player.pause();
+              } else {
+                player.play();
+              }
+            });
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.skip_next),
+          onPressed: () {
+            setState(() {
+              player.seekToNext();
+            });
+          },
+        ),
+      ],
+    );
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [Expanded(child: lhs), mid],
+    );
+  }
+
+  IconButton volumeToggleButton() {
+    return IconButton(
+      icon: StreamBuilder<double>(
+          stream: player.volumeStream,
+          builder: (context, snapshot) {
+            return Icon(snapshot.data != null && snapshot.data! > 0
+                ? Icons.volume_up
+                : Icons.volume_off);
+          }),
+      onPressed: () {
+        setState(() {
+          if (player.volume > 0) {
+            lastVolume = player.volume;
+            player.setVolume(0);
+          } else {
+            player.setVolume(lastVolume);
+          }
+        });
+      },
+    );
+  }
+
+  IconButton pickDirectoryButton() {
+    return IconButton(
+        onPressed: () {
+          pickDirectory().then(
+            (value) {
+              if (value != null) {
+                syncDirectory(mountPoint: value)
+                    .whenComplete(() => setState(() {
+                          trackListFuture = getAllTracks();
+                        }));
+              }
+            },
+          );
+        },
+        icon: const Icon(Icons.folder));
+  }
+
+  SliderTheme volumeSlider() {
+    return SliderTheme(
+      data: nakedSliderThemeData(),
+      child: StreamBuilder<double>(
+          stream: player.volumeStream,
+          builder: (context, snapshot) {
+            return Slider(
+              min: 0,
+              max: 1,
+              value: snapshot.data ?? 1,
+              onChanged: (value) {
+                player.setVolume(value);
+              },
+              onChangeEnd: (value) {
+                setState(() {});
+              },
+            );
+          }),
     );
   }
 
@@ -323,27 +412,33 @@ class _MyAppState extends State<MyApp> {
             itemCount: tracks.length,
             itemBuilder: (BuildContext context, int index) {
               return ListTile(
-                leading: ClipRRect(
-                  borderRadius: const BorderRadius.all(Radius.circular(4)),
-                  child: tracks![index].pictureId != null
-                      ? Image.file(
-                          File(
-                              "${getCachePath()}/${tracks[index].pictureId!}.jpg"),
-                          filterQuality: FilterQuality.medium,
-                          fit: BoxFit.cover)
-                      : AspectRatio(
-                          aspectRatio: 1,
-                          child: Container(
+                dense: true,
+                leading: AspectRatio(
+                  aspectRatio: 1,
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.all(Radius.circular(4)),
+                    child: tracks[index].pictureId != null
+                        ? Image.file(
+                            File(
+                                "${getCachePath()}/${tracks[index].pictureId!}.jpg"),
+                            filterQuality: FilterQuality.medium,
+                            cacheHeight: 48,
+                            fit: BoxFit.cover)
+                        : Container(
                             color: Colors.grey,
                             child: const Icon(Icons.music_note),
-                          )),
+                          ),
+                  ),
                 ),
                 title: Text(
                   tracks[index].title ?? 'Unknown Track',
                 ),
                 subtitle: Text(tracks[index].artist ?? 'Unknown Artist'),
                 onTap: () {
-                  print(tracks[index].location);
+                  setState(() {
+                    currentTrack = tracks[index];
+                    player.setFilePath(tracks[index].location);
+                  });
                 },
               );
             },

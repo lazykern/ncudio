@@ -1,6 +1,10 @@
 #include "my_application.h"
 
 #include <flutter_linux/flutter_linux.h>
+
+// `media_kit` uses mpv as a backend, the locale need to be set to C
+#include <locale>
+
 #ifdef GDK_WINDOWING_X11
 #include <gdk/gdkx.h>
 #endif
@@ -16,6 +20,10 @@ G_DEFINE_TYPE(MyApplication, my_application, GTK_TYPE_APPLICATION)
 
 // Implements GApplication::activate.
 static void my_application_activate(GApplication* application) {
+  
+  // `media_kit` uses mpv as a backend, the locale need to be set to C
+  std::setlocale(LC_NUMERIC, "C");
+
   MyApplication* self = MY_APPLICATION(application);
   GtkWindow* window =
       GTK_WINDOW(gtk_application_window_new(GTK_APPLICATION(application)));
