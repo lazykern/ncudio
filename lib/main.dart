@@ -39,6 +39,29 @@ class _MyAppState extends State<MyApp> {
   late Future<List<TrackDTO>> trackListFuture = getAllTracks();
   String searchQuery = '';
 
+  ThemeMode themeMode = ThemeMode.system;
+  bool get useLightMode {
+    switch (themeMode) {
+      case ThemeMode.system:
+        return View.of(context).platformDispatcher.platformBrightness ==
+            Brightness.light;
+      case ThemeMode.light:
+        return true;
+      case ThemeMode.dark:
+        return false;
+    }
+  }
+
+  ThemeData lightThemeData = ThemeData(
+    primarySwatch: Colors.blue,
+    brightness: Brightness.light,
+  );
+
+  ThemeData darkThemeData = ThemeData(
+    primarySwatch: Colors.blue,
+    brightness: Brightness.dark,
+  );
+
   @override
   void initState() {
     super.initState();
@@ -52,6 +75,9 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      themeMode: themeMode,
+      theme: lightThemeData,
+      darkTheme: darkThemeData,
       home: Scaffold(
         appBar: AppBar(
           flexibleSpace: TextField(
@@ -67,6 +93,23 @@ class _MyAppState extends State<MyApp> {
             },
           ),
           actions: [
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: IconButton(
+                icon: Icon(
+                  themeMode == ThemeMode.light
+                      ? Icons.light_mode
+                      : Icons.dark_mode,
+                ),
+                onPressed: () {
+                  setState(() {
+                    themeMode = themeMode == ThemeMode.light
+                        ? ThemeMode.system
+                        : ThemeMode.light;
+                  });
+                },
+              ),
+            ),
             IconButton(
               icon: const Icon(Icons.delete_forever),
               onPressed: () {
