@@ -126,6 +126,7 @@ class _MyAppState extends State<MyApp> {
                 icon: const Icon(Icons.delete_forever),
                 onPressed: () {
                   deleteAllTracks().whenComplete(() => setState(() {
+                        stopAndClear();
                         trackListFuture = getAllTracks();
                       }));
                 },
@@ -187,7 +188,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   Row buttomBar() {
-    var lhs = player.audioSource != null
+    var lhs = currentTrack != null && player.audioSource != null
         ? Row(
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -302,11 +303,7 @@ class _MyAppState extends State<MyApp> {
           ),
           onPressed: () {
             setState(() {
-              if (player.playing) {
-                player.pause();
-              } else {
-                player.play();
-              }
+              togglePlayPause();
             });
           },
         ),
@@ -438,8 +435,8 @@ class _MyAppState extends State<MyApp> {
                 subtitle: Text(tracks[index].artist ?? 'Unknown Artist'),
                 onTap: () {
                   setState(() {
-                    currentTrack = tracks[index];
-                    player.setFilePath(tracks[index].location);
+                    setTrack(tracks[index]);
+                    play();
                   });
                 },
               );
@@ -459,5 +456,39 @@ class _MyAppState extends State<MyApp> {
           RoundSliderThumbShape(enabledThumbRadius: 2, pressedElevation: 0),
       overlayShape: RoundSliderOverlayShape(overlayRadius: 0),
     );
+  }
+
+  void setTrack(TrackDTO track) {
+    player.setFilePath(track.location);
+    currentTrack = track;
+  }
+
+  void play() {
+    if (currentTrack == null) {
+      return;
+    }
+
+    player.play();
+  }
+
+  void togglePlayPause() {
+    if (currentTrack == null) {
+      return;
+    }
+
+    if (player.playing) {
+      player.pause();
+    } else {
+      player.play();
+    }
+  }
+
+  void stopAndClear() {
+    player.stop();
+    currentTrack = null;
+  }
+
+  void stop() {
+    player.stop();
   }
 }
