@@ -113,7 +113,9 @@ class _MyAppState extends State<MyApp> {
             IconButton(
               icon: const Icon(Icons.delete_forever),
               onPressed: () {
-                deleteAllTracks().whenComplete(() => setState(() {}));
+                deleteAllTracks().whenComplete(() => setState(() {
+                      trackListFuture = getAllTracks();
+                    }));
               },
             ),
           ],
