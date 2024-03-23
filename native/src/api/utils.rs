@@ -1,5 +1,4 @@
 use super::simple::TrackDTO;
-use wana_kana::ConvertJapanese;
 
 #[flutter_rust_bridge::frb(sync)]
 pub fn track_query_filter(query: String, track: TrackDTO) -> bool {
@@ -12,12 +11,9 @@ pub fn track_query_filter(query: String, track: TrackDTO) -> bool {
         return true;
     }
 
-    let query_kana = query.to_romaji();
-    let track_name_kana = track_name.to_romaji();
-    let track_artist_kana = track_artist.to_romaji();
-    let track_album_kana = track_album.to_kana();
+    let query_kana = kakasi::convert(&query).romaji;
 
-    if track_name_kana.contains(&query_kana) || track_artist_kana.contains(&query_kana) || track_album_kana.contains(&query_kana) {
+    if kakasi::convert(&track_name).romaji.contains(&query_kana) || kakasi::convert(&track_artist).romaji.contains(&query_kana) || kakasi::convert(&track_album).romaji.contains(&query_kana) {
         return true;
     }
 
