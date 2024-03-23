@@ -275,7 +275,9 @@ class _MyAppState extends State<MyApp> {
                                 (value) {
                                   if (value != null) {
                                     syncDirectory(mountPoint: value)
-                                        .whenComplete(() => setState(() {}));
+                                        .whenComplete(() => setState(() {
+                                              trackListFuture = getAllTracks();
+                                            }));
                                   }
                                 },
                               );
