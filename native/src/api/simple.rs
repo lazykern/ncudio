@@ -1,7 +1,7 @@
 use std::fs;
 
 use diesel::{
-    Connection, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl, RunQueryDsl, SelectableHelper, SqliteConnection
+    Connection, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl, RunQueryDsl, SqliteConnection
 };
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 
@@ -15,9 +15,9 @@ use std::path::PathBuf;
 
 use jwalk::WalkDir;
 use lofty::{Accessor, AudioFile, Probe, TaggedFileExt};
-use rayon::{iter::{ParallelBridge, ParallelIterator}, vec};
+use rayon::iter::{ParallelBridge, ParallelIterator};
 
-use crate::{model::{NewTrack, Track}, schema::track};
+use crate::model::{NewTrack, Track};
 
 #[flutter_rust_bridge::frb(sync)]
 pub fn get_db_url() -> String {

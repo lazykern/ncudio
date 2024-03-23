@@ -1,10 +1,6 @@
 import 'dart:io';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/painting.dart';
-import 'package:flutter/rendering.dart';
-import 'package:flutter/widgets.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_media_kit/just_audio_media_kit.dart';
 import 'package:ncudio/src/rust/api/simple.dart';
@@ -504,23 +500,27 @@ class _MyAppState extends State<MyApp> {
                     itemBuilder: (BuildContext context, int index) {
                       return ListTile(
                         dense: true,
-                        leading: AspectRatio(
-                          aspectRatio: 1,
-                          child: ClipRRect(
-                            borderRadius:
-                                const BorderRadius.all(Radius.circular(4)),
-                            child: tracks[index].pictureId != null
-                                ? Image.file(
-                                    File(
-                                        "${getCachePath()}/${tracks[index].pictureId!}.jpg"),
-                                    filterQuality: FilterQuality.medium,
-                                    cacheHeight: 48,
-                                    fit: BoxFit.cover)
-                                : Container(
-                                    color: Colors.grey,
-                                    child: const Icon(Icons.music_note),
-                                  ),
-                          ),
+                        leading: Row(
+                          children: [
+                            AspectRatio(
+                              aspectRatio: 1,
+                              child: ClipRRect(
+                                borderRadius:
+                                    const BorderRadius.all(Radius.circular(4)),
+                                child: tracks[index].pictureId != null
+                                    ? Image.file(
+                                        File(
+                                            "${getCachePath()}/${tracks[index].pictureId!}.jpg"),
+                                        filterQuality: FilterQuality.medium,
+                                        cacheHeight: 48,
+                                        fit: BoxFit.cover)
+                                    : Container(
+                                        color: Colors.grey,
+                                        child: const Icon(Icons.music_note),
+                                      ),
+                              ),
+                            ),
+                          ],
                         ),
                         title: Text(
                           tracks[index].title ?? 'Unknown Track',
