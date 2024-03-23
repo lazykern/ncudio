@@ -59,13 +59,9 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  ThemeData lightThemeData = ThemeData(
-    brightness: Brightness.light,
-  );
+  static ThemeData lightThemeData = ThemeData();
 
-  ThemeData darkThemeData = ThemeData(
-    brightness: Brightness.dark,
-  );
+  static ThemeData darkThemeData = ThemeData.dark();
 
   @override
   void initState() {
@@ -92,95 +88,100 @@ class _MyAppState extends State<MyApp> {
       themeMode: themeMode,
       theme: lightThemeData,
       darkTheme: darkThemeData,
-      home: Scaffold(
-        appBar: AppBar(
-          flexibleSpace: TextField(
-            decoration: const InputDecoration(
-              hintText: 'Search',
-              prefixIcon: Icon(Icons.search),
-              border: InputBorder.none,
-            ),
-            onChanged: (value) {
-              setState(() {
-                searchQuery = value.toLowerCase();
-              });
-            },
-          ),
-          actions: [
-            volumeToggleButton(),
-            volumeSlider(),
-            IconButton(
-              icon: Icon(
-                themeMode == ThemeMode.light
-                    ? Icons.light_mode
-                    : Icons.dark_mode,
+      home: Builder(builder: (context) {
+        return Scaffold(
+          appBar: AppBar(
+            flexibleSpace: TextField(
+              decoration: const InputDecoration(
+                hintText: 'Search',
+                prefixIcon: Icon(Icons.search),
+                border: InputBorder.none,
               ),
-              onPressed: () {
+              onChanged: (value) {
                 setState(() {
-                  themeMode = themeMode == ThemeMode.light
-                      ? ThemeMode.system
-                      : ThemeMode.light;
+                  searchQuery = value.toLowerCase();
                 });
               },
             ),
-            pickDirectoryButton(),
-            IconButton(
-              icon: const Icon(Icons.delete_forever),
-              onPressed: () {
-                deleteAllTracks().whenComplete(() => setState(() {
-                      trackListFuture = getAllTracks();
-                    }));
-              },
-            ),
-          ],
-        ),
-        body: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Expanded(
-              child: trackList(),
-            ),
-            Container(
-              height: 20,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: SliderTheme(
-                data: nakedSliderThemeData(),
-                child: StreamBuilder<Duration>(
-                    stream: player.positionStream,
-                    builder: (context, positionSnapshot) {
-                      return StreamBuilder<Duration?>(
-                          stream: player.durationStream,
-                          builder: (context, durationSnapshot) {
-                            var duration =
-                                durationSnapshot.data ?? Duration.zero;
-                            var position =
-                                positionSnapshot.data ?? Duration.zero;
-                            if (position > duration) {
-                              position = duration;
-                            }
-                            return Slider(
-                              min: 0,
-                              max: duration.inMilliseconds.toDouble(),
-                              value: position < Duration.zero
-                                  ? 0
-                                  : position.inMilliseconds.toDouble(),
-                              onChanged: (value) {
-                                player.seek(
-                                    Duration(milliseconds: value.toInt()));
-                              },
-                            );
-                          });
-                    }),
+            actions: [
+              volumeToggleButton(),
+              volumeSlider(),
+              IconButton(
+                icon: Icon(
+                  themeMode == ThemeMode.light
+                      ? Icons.light_mode
+                      : Icons.dark_mode,
+                ),
+                onPressed: () {
+                  setState(() {
+                    themeMode = themeMode == ThemeMode.light
+                        ? ThemeMode.system
+                        : ThemeMode.light;
+                  });
+                },
               ),
-            ),
-            Container(
-              height: 96,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: buttomBar(),
-            )
-          ],
-        ),
-      ),
+              pickDirectoryButton(),
+              IconButton(
+                icon: const Icon(Icons.delete_forever),
+                onPressed: () {
+                  deleteAllTracks().whenComplete(() => setState(() {
+                        trackListFuture = getAllTracks();
+                      }));
+                },
+              ),
+            ],
+          ),
+          body: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Expanded(
+                child: trackList(),
+              ),
+              Container(
+                height: 20,
+                color: Theme.of(context).scaffoldBackgroundColor,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: SliderTheme(
+                  data: nakedSliderThemeData(),
+                  child: StreamBuilder<Duration>(
+                      stream: player.positionStream,
+                      builder: (context, positionSnapshot) {
+                        return StreamBuilder<Duration?>(
+                            stream: player.durationStream,
+                            builder: (context, durationSnapshot) {
+                              var duration =
+                                  durationSnapshot.data ?? Duration.zero;
+                              var position =
+                                  positionSnapshot.data ?? Duration.zero;
+                              if (position > duration) {
+                                position = duration;
+                              }
+                              return Slider(
+                                min: 0,
+                                max: duration.inMilliseconds.toDouble(),
+                                value: position < Duration.zero
+                                    ? 0
+                                    : position.inMilliseconds.toDouble(),
+                                onChanged: (value) {
+                                  player.seek(
+                                      Duration(milliseconds: value.toInt()));
+                                },
+                              );
+                            });
+                      }),
+                ),
+              ),
+              Container(
+                height: 96,
+                color: Theme.of(context).scaffoldBackgroundColor,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: buttomBar(),
+              )
+            ],
+          ),
+        );
+      }),
     );
   }
 
