@@ -449,7 +449,6 @@ class _MyAppState extends State<MyApp> {
       builder:
           (BuildContext context, AsyncSnapshot<List<TrackDTO>> tracksSnapshot) {
         if (tracksSnapshot.connectionState == ConnectionState.done) {
-          final startTime = DateTime.now();
           if (tracksSnapshot.hasError) {
             return Text('Error: ${tracksSnapshot.error}');
           }
@@ -499,9 +498,6 @@ class _MyAppState extends State<MyApp> {
                   if (tracks.isEmpty) {
                     return const Center(child: Text('No tracks found'));
                   }
-
-                  print(
-                      'Track list build time: ${DateTime.now().difference(startTime).inMilliseconds}ms');
 
                   return SuperListView.builder(
                     itemCount: tracks.length,
