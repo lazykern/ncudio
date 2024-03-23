@@ -1,8 +1,7 @@
 use std::fs;
 
 use diesel::{
-    BoolExpressionMethods, Connection, ConnectionError, ExpressionMethods, QueryDsl, RunQueryDsl,
-    SqliteConnection,
+    Connection, ExpressionMethods, JoinOnDsl, QueryDsl, RunQueryDsl, SelectableHelper, SqliteConnection
 };
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 
@@ -12,21 +11,17 @@ const CONFIG_PATH: &str = "/home/lazykern/.config/ncudio";
 const CACHE_PATH: &str = "/home/lazykern/.cache/ncudio";
 const DATA_PATH: &str = "/home/lazykern/.local/share/ncudio";
 
-
 use std::path::PathBuf;
 
 use jwalk::WalkDir;
 use lofty::{Accessor, AudioFile, Probe, TaggedFileExt};
-use rayon::iter::{ParallelBridge, ParallelIterator};
+use rayon::{iter::{ParallelBridge, ParallelIterator}, vec};
 
-use crate::{
-    model::{NewTrack, Track},
-    schema,
-};
+use crate::{model::{NewTrack, Track}, schema::track};
 
 #[flutter_rust_bridge::frb(sync)]
 pub fn get_db_url() -> String {
-    format!("sqlite://{}/ncudio.db", CONFIG_PATH)
+    format!("sqlite://{}/ncudio.db", DATA_PATH)
 }
 
 #[flutter_rust_bridge::frb(sync)]
@@ -82,7 +77,17 @@ pub fn initialize_db() {
     run_migrations(&mut connection).unwrap();
 }
 
-fn parse_music_file<P: AsRef<std::path::Path>>(path: P, mount_point: &P) -> Option<NewTrack> {
+struct ParsedTrack {
+    title: Option<String>,
+    artist: Option<String>,
+    album: Option<String>,
+    duration_ms: i32,
+    location: String,
+    mount_point: String,
+    picture_id: Option<String>,
+}
+
+fn parse_music_file<P: AsRef<std::path::Path>>(path: P, mount_point: &P) -> Option<ParsedTrack> {
     let path = path.as_ref();
     let mount_point = mount_point.as_ref();
 
@@ -101,18 +106,16 @@ fn parse_music_file<P: AsRef<std::path::Path>>(path: P, mount_point: &P) -> Opti
 
     let properties = tagged_file.properties();
 
-    let file = path.file_name()?.to_string_lossy().to_string();
-    let dir_path = path.parent()?.to_string_lossy().to_string();
+    let location = path.to_string_lossy().to_string();
     let duration_ms = properties.duration().as_millis() as i32;
 
-    let mut new_track = NewTrack {
+    let mut parsed_track = ParsedTrack {
         picture_id: None,
         title: None,
         artist: None,
         album: None,
-        duration_ms: duration_ms,
-        file,
-        directory: dir_path,
+        location,
+        duration_ms,
         mount_point: mount_point.to_string_lossy().to_string(),
     };
 
@@ -120,13 +123,13 @@ fn parse_music_file<P: AsRef<std::path::Path>>(path: P, mount_point: &P) -> Opti
         Some(primary_tag) => primary_tag,
         None => match tagged_file.first_tag() {
             Some(first_tag) => first_tag,
-            None => return Some(new_track),
+            None => return Some(parsed_track),
         },
     };
 
-    new_track.title = tag.title().map(|s| s.to_string());
-    new_track.artist = tag.artist().map(|s| s.to_string());
-    new_track.album = tag.album().map(|s| s.to_string());
+    parsed_track.title = tag.title().map(|s| s.to_string());
+    parsed_track.artist = tag.artist().map(|s| s.to_string());
+    parsed_track.album = tag.album().map(|s| s.to_string());
 
     if let Some(picture) = tag.pictures().first() {
         let picture_id_digest = md5::compute(picture.data());
@@ -137,19 +140,22 @@ fn parse_music_file<P: AsRef<std::path::Path>>(path: P, mount_point: &P) -> Opti
         fs::write(&picture_path, picture.data()).ok();
 
         if picture_path.exists() {
-            new_track.picture_id = Some(picture_id);
+            parsed_track.picture_id = Some(picture_id);
         }
     }
 
-    Some(new_track)
+    Some(parsed_track)
 }
 
 pub fn sync_directory(mount_point: String) {
-    use crate::schema::track;
+    use crate::model;
+    use crate::schema::album::dsl as album_dsl;
+    use crate::schema::artist::dsl as artist_dsl;
+    use crate::schema::track::dsl as track_dsl;
 
     let mount_point = PathBuf::from(mount_point);
 
-    let new_tracks: Vec<NewTrack> = WalkDir::new(&mount_point)
+    let parsed_tracks: Vec<ParsedTrack> = WalkDir::new(&mount_point)
         .into_iter()
         .par_bridge()
         .filter_map(|e| e.ok())
@@ -158,36 +164,152 @@ pub fn sync_directory(mount_point: String) {
 
     let conn = &mut establish_connection().unwrap();
 
-    for new_track in new_tracks {
-        diesel::delete(
-            track::table.filter(
-                track::directory.eq(&new_track.mount_point).and(
-                    track::directory
-                        .eq(&new_track.directory)
-                        .and(track::file.eq(&new_track.file)),
-                ),
-            ),
-        )
-        .execute(conn)
-        .unwrap();
+    for parsed_tracks in parsed_tracks {
+        let new_artist = match parsed_tracks.artist {
+            Some(artist) => Some(model::NewArtist { name: artist }),
+            None => None,
+        };
+        let artist: Option<model::Artist> = match new_artist {
+            Some(new_artist) => {
+                let artist = artist_dsl::artist
+                    .filter(artist_dsl::name.eq(&new_artist.name))
+                    .first(conn)
+                    .ok();
 
-        match diesel::insert_into(track::table)
+                match artist {
+                    Some(artist) => Some(artist),
+                    None => {
+                        let _ = diesel::insert_into(artist_dsl::artist)
+                            .values(&new_artist)
+                            .execute(conn);
+                        artist_dsl::artist
+                            .filter(artist_dsl::name.eq(&new_artist.name))
+                            .first(conn)
+                            .ok()
+                    }
+                }
+            }
+            None => None,
+        };
+
+        let new_album = match parsed_tracks.album {
+            Some(album) => Some(model::NewAlbum {
+                name: album,
+                artist_id: artist.as_ref().map(|a| a.id),
+            }),
+            None => None,
+        };
+
+        let album: Option<model::Album> = match new_album {
+            Some(new_album) => {
+                let album = album_dsl::album
+                    .filter(album_dsl::name.eq(&new_album.name))
+                    .first(conn)
+                    .ok();
+
+                match album {
+                    Some(album) => Some(album),
+                    None => {
+                        let _ = diesel::insert_into(album_dsl::album)
+                            .values(&new_album)
+                            .execute(conn);
+                        album_dsl::album
+                            .filter(album_dsl::name.eq(&new_album.name))
+                            .first(conn)
+                            .ok()
+                    }
+                }
+            }
+            None => None,
+        };
+
+        let new_track = NewTrack {
+            picture_id: parsed_tracks.picture_id,
+            album_id: album.as_ref().map(|a| a.id),
+            artist_id: artist.as_ref().map(|a| a.id),
+            title: parsed_tracks.title,
+            duration_ms: parsed_tracks.duration_ms,
+            location: parsed_tracks.location,
+            mount_point: parsed_tracks.mount_point,
+        };
+
+        let res = diesel::insert_into(track_dsl::track)
             .values(&new_track)
-            .execute(conn)
-        {
-            Ok(_) => (),
-            Err(e) => println!("Error inserting track: {:?}", e),
+            .on_conflict(track_dsl::location).do_update()
+            .set(&new_track)
+            .execute(conn);
+
+        if let Err(e) = res {
+            println!("Error inserting track: {:?}", e);
         }
     }
 }
 
-pub fn get_all_tracks() -> Vec<Track> {
-    use crate::schema::track::dsl::*;
+pub struct TrackDTO {
+    pub id: i32,
+    pub title: Option<String>,
+    pub artist: Option<String>,
+    pub album: Option<String>,
+    pub duration_ms: i32,
+    pub location: String,
+    pub mount_point: String,
+    pub picture_id: Option<String>,
+}
+
+pub fn get_all_tracks() -> Vec<TrackDTO> {
+    use crate::schema::album::dsl as album_dsl;
+    use crate::schema::artist::dsl as artist_dsl;
+    use crate::schema;
+    use crate::model;
 
     let conn = &mut establish_connection().unwrap();
 
-    track.load(conn).unwrap()
+    let tracks: Vec<Track> = schema::track::table.load(conn).unwrap();
+
+    let mut track_dtos = vec![];
+
+    for track in tracks {
+        let artist: Option<model::Artist> = match track.artist_id {
+            Some(artist_id) => artist_dsl::artist
+                .filter(artist_dsl::id.eq(artist_id))
+                .first(conn)
+                .ok(),
+            None => None,
+        };
+
+        let album: Option<model::Album> = match track.album_id {
+            Some(album_id) => album_dsl::album
+                .filter(album_dsl::id.eq(album_id))
+                .first(conn)
+                .ok(),
+            None => None,
+        };
+
+        let track_dto = TrackDTO {
+            id: track.id,
+            title: track.title,
+            artist: artist.map(|a| a.name),
+            album: album.map(|a| a.name),
+            duration_ms: track.duration_ms,
+            location: track.location,
+            mount_point: track.mount_point,
+            picture_id: track.picture_id,
+        };
+
+        track_dtos.push(track_dto);
+    }
+
+    track_dtos
 }
+
+pub fn delete_all_tracks() {
+    use crate::schema::track::dsl as track_dsl;
+
+    let conn = &mut establish_connection().unwrap();
+
+    diesel::delete(track_dsl::track).execute(conn).unwrap();
+}
+
 
 pub fn pick_directory() -> Option<String> {
     rfd::FileDialog::new()
