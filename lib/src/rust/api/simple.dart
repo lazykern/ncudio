@@ -31,6 +31,18 @@ Future<void> syncDirectory({required String mountPoint, dynamic hint}) =>
 Future<List<TrackDTO>> getAllTracks({dynamic hint}) =>
     RustLib.instance.api.getAllTracks(hint: hint);
 
+Future<Int32List> getAllTrackIdsSortedByTitle({dynamic hint}) =>
+    RustLib.instance.api.getAllTrackIdsSortedByTitle(hint: hint);
+
+Future<Int32List> getAllTrackIdsSortedByArtist({dynamic hint}) =>
+    RustLib.instance.api.getAllTrackIdsSortedByArtist(hint: hint);
+
+Future<Int32List> getAllTrackIdsSortedByAlbum({dynamic hint}) =>
+    RustLib.instance.api.getAllTrackIdsSortedByAlbum(hint: hint);
+
+Future<Int32List> getAllTrackIdsSortedByDuration({dynamic hint}) =>
+    RustLib.instance.api.getAllTrackIdsSortedByDuration(hint: hint);
+
 Future<void> deleteAllTracks({dynamic hint}) =>
     RustLib.instance.api.deleteAllTracks(hint: hint);
 

@@ -11,3 +11,19 @@ bool trackQueryFilter(
         {required String query, required TrackDTO track, dynamic hint}) =>
     RustLib.instance.api
         .trackQueryFilter(query: query, track: track, hint: hint);
+
+List<TrackDTO> sortTracksByTitle(
+        {required List<TrackDTO> tracks, dynamic hint}) =>
+    RustLib.instance.api.sortTracksByTitle(tracks: tracks, hint: hint);
+
+List<TrackDTO> sortTracksByArtist(
+        {required List<TrackDTO> tracks, dynamic hint}) =>
+    RustLib.instance.api.sortTracksByArtist(tracks: tracks, hint: hint);
+
+List<TrackDTO> sortTracksByAlbum(
+        {required List<TrackDTO> tracks, dynamic hint}) =>
+    RustLib.instance.api.sortTracksByAlbum(tracks: tracks, hint: hint);
+
+List<TrackDTO> sortTracksByDuration(
+        {required List<TrackDTO> tracks, dynamic hint}) =>
+    RustLib.instance.api.sortTracksByDuration(tracks: tracks, hint: hint);

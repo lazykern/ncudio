@@ -23,3 +23,27 @@ pub fn track_query_filter(query: String, track: TrackDTO) -> bool {
 
     false
 }
+
+#[flutter_rust_bridge::frb(sync)]
+pub fn sort_tracks_by_title(mut tracks: Vec<TrackDTO>) -> Vec<TrackDTO> {
+    tracks.sort_by(|a, b| a.title.cmp(&b.title));
+    tracks
+}
+
+#[flutter_rust_bridge::frb(sync)]
+pub fn sort_tracks_by_artist(mut tracks: Vec<TrackDTO>) -> Vec<TrackDTO> {
+    tracks.sort_by(|a, b| a.artist.cmp(&b.artist));
+    tracks
+}
+
+#[flutter_rust_bridge::frb(sync)]
+pub fn sort_tracks_by_album(mut tracks: Vec<TrackDTO>) -> Vec<TrackDTO> {
+    tracks.sort_by(|a, b| a.album.cmp(&b.album));
+    tracks
+}
+
+#[flutter_rust_bridge::frb(sync)]
+pub fn sort_tracks_by_duration(mut tracks: Vec<TrackDTO>) -> Vec<TrackDTO> {
+    tracks.sort_by(|a, b| a.duration_ms.cmp(&b.duration_ms));
+    tracks
+}

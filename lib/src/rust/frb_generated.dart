@@ -69,6 +69,14 @@ abstract class RustLibApi extends BaseApi {
 
   Future<void> frbInit({dynamic hint});
 
+  Future<Int32List> getAllTrackIdsSortedByAlbum({dynamic hint});
+
+  Future<Int32List> getAllTrackIdsSortedByArtist({dynamic hint});
+
+  Future<Int32List> getAllTrackIdsSortedByDuration({dynamic hint});
+
+  Future<Int32List> getAllTrackIdsSortedByTitle({dynamic hint});
+
   Future<List<TrackDTO>> getAllTracks({dynamic hint});
 
   String getCachePath({dynamic hint});
@@ -86,6 +94,18 @@ abstract class RustLibApi extends BaseApi {
   Future<String?> pickDirectory({dynamic hint});
 
   Future<void> syncDirectory({required String mountPoint, dynamic hint});
+
+  List<TrackDTO> sortTracksByAlbum(
+      {required List<TrackDTO> tracks, dynamic hint});
+
+  List<TrackDTO> sortTracksByArtist(
+      {required List<TrackDTO> tracks, dynamic hint});
+
+  List<TrackDTO> sortTracksByDuration(
+      {required List<TrackDTO> tracks, dynamic hint});
+
+  List<TrackDTO> sortTracksByTitle(
+      {required List<TrackDTO> tracks, dynamic hint});
 
   bool trackQueryFilter(
       {required String query, required TrackDTO track, dynamic hint});
@@ -105,7 +125,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 10, port: port_);
+            funcId: 14, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -144,6 +164,106 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   TaskConstMeta get kFrbInitConstMeta => const TaskConstMeta(
         debugName: "frb_init",
+        argNames: [],
+      );
+
+  @override
+  Future<Int32List> getAllTrackIdsSortedByAlbum({dynamic hint}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 12, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_list_prim_i_32_strict,
+        decodeErrorData: null,
+      ),
+      constMeta: kGetAllTrackIdsSortedByAlbumConstMeta,
+      argValues: [],
+      apiImpl: this,
+      hint: hint,
+    ));
+  }
+
+  TaskConstMeta get kGetAllTrackIdsSortedByAlbumConstMeta =>
+      const TaskConstMeta(
+        debugName: "get_all_track_ids_sorted_by_album",
+        argNames: [],
+      );
+
+  @override
+  Future<Int32List> getAllTrackIdsSortedByArtist({dynamic hint}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 11, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_list_prim_i_32_strict,
+        decodeErrorData: null,
+      ),
+      constMeta: kGetAllTrackIdsSortedByArtistConstMeta,
+      argValues: [],
+      apiImpl: this,
+      hint: hint,
+    ));
+  }
+
+  TaskConstMeta get kGetAllTrackIdsSortedByArtistConstMeta =>
+      const TaskConstMeta(
+        debugName: "get_all_track_ids_sorted_by_artist",
+        argNames: [],
+      );
+
+  @override
+  Future<Int32List> getAllTrackIdsSortedByDuration({dynamic hint}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 13, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_list_prim_i_32_strict,
+        decodeErrorData: null,
+      ),
+      constMeta: kGetAllTrackIdsSortedByDurationConstMeta,
+      argValues: [],
+      apiImpl: this,
+      hint: hint,
+    ));
+  }
+
+  TaskConstMeta get kGetAllTrackIdsSortedByDurationConstMeta =>
+      const TaskConstMeta(
+        debugName: "get_all_track_ids_sorted_by_duration",
+        argNames: [],
+      );
+
+  @override
+  Future<Int32List> getAllTrackIdsSortedByTitle({dynamic hint}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 10, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_list_prim_i_32_strict,
+        decodeErrorData: null,
+      ),
+      constMeta: kGetAllTrackIdsSortedByTitleConstMeta,
+      argValues: [],
+      apiImpl: this,
+      hint: hint,
+    ));
+  }
+
+  TaskConstMeta get kGetAllTrackIdsSortedByTitleConstMeta =>
+      const TaskConstMeta(
+        debugName: "get_all_track_ids_sorted_by_title",
         argNames: [],
       );
 
@@ -315,7 +435,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 11, port: port_);
+            funcId: 15, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_opt_String,
@@ -359,6 +479,106 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  List<TrackDTO> sortTracksByAlbum(
+      {required List<TrackDTO> tracks, dynamic hint}) {
+    return handler.executeSync(SyncTask(
+      callFfi: () {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_list_track_dto(tracks, serializer);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 19)!;
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_list_track_dto,
+        decodeErrorData: null,
+      ),
+      constMeta: kSortTracksByAlbumConstMeta,
+      argValues: [tracks],
+      apiImpl: this,
+      hint: hint,
+    ));
+  }
+
+  TaskConstMeta get kSortTracksByAlbumConstMeta => const TaskConstMeta(
+        debugName: "sort_tracks_by_album",
+        argNames: ["tracks"],
+      );
+
+  @override
+  List<TrackDTO> sortTracksByArtist(
+      {required List<TrackDTO> tracks, dynamic hint}) {
+    return handler.executeSync(SyncTask(
+      callFfi: () {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_list_track_dto(tracks, serializer);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 18)!;
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_list_track_dto,
+        decodeErrorData: null,
+      ),
+      constMeta: kSortTracksByArtistConstMeta,
+      argValues: [tracks],
+      apiImpl: this,
+      hint: hint,
+    ));
+  }
+
+  TaskConstMeta get kSortTracksByArtistConstMeta => const TaskConstMeta(
+        debugName: "sort_tracks_by_artist",
+        argNames: ["tracks"],
+      );
+
+  @override
+  List<TrackDTO> sortTracksByDuration(
+      {required List<TrackDTO> tracks, dynamic hint}) {
+    return handler.executeSync(SyncTask(
+      callFfi: () {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_list_track_dto(tracks, serializer);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 20)!;
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_list_track_dto,
+        decodeErrorData: null,
+      ),
+      constMeta: kSortTracksByDurationConstMeta,
+      argValues: [tracks],
+      apiImpl: this,
+      hint: hint,
+    ));
+  }
+
+  TaskConstMeta get kSortTracksByDurationConstMeta => const TaskConstMeta(
+        debugName: "sort_tracks_by_duration",
+        argNames: ["tracks"],
+      );
+
+  @override
+  List<TrackDTO> sortTracksByTitle(
+      {required List<TrackDTO> tracks, dynamic hint}) {
+    return handler.executeSync(SyncTask(
+      callFfi: () {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_list_track_dto(tracks, serializer);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 17)!;
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_list_track_dto,
+        decodeErrorData: null,
+      ),
+      constMeta: kSortTracksByTitleConstMeta,
+      argValues: [tracks],
+      apiImpl: this,
+      hint: hint,
+    ));
+  }
+
+  TaskConstMeta get kSortTracksByTitleConstMeta => const TaskConstMeta(
+        debugName: "sort_tracks_by_title",
+        argNames: ["tracks"],
+      );
+
+  @override
   bool trackQueryFilter(
       {required String query, required TrackDTO track, dynamic hint}) {
     return handler.executeSync(SyncTask(
@@ -366,7 +586,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(query, serializer);
         sse_encode_box_autoadd_track_dto(track, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 12)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 16)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_bool,
@@ -406,6 +626,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   int dco_decode_i_32(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as int;
+  }
+
+  @protected
+  Int32List dco_decode_list_prim_i_32_strict(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as Int32List;
   }
 
   @protected
@@ -479,6 +705,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   int sse_decode_i_32(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getInt32();
+  }
+
+  @protected
+  Int32List sse_decode_list_prim_i_32_strict(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var len_ = sse_decode_i_32(deserializer);
+    return deserializer.buffer.getInt32List(len_);
   }
 
   @protected
@@ -567,6 +800,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_i_32(int self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putInt32(self);
+  }
+
+  @protected
+  void sse_encode_list_prim_i_32_strict(
+      Int32List self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    serializer.buffer.putInt32List(self);
   }
 
   @protected

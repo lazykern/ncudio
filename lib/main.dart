@@ -39,8 +39,27 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
+enum TrackSortBy {
+  title,
+  artist,
+  album,
+  duration,
+}
+
+enum TrackSortOrder {
+  ascending,
+  descending,
+}
+
 class _MyAppState extends State<MyApp> {
-  late Future<List<TrackDTO>> trackListFuture = getAllTracks();
+  late Future<List<TrackDTO>> futureTrackList;
+  late Future<List<int>> futureTrackIdsSortedByTitle;
+  late Future<List<int>> futureTrackIdsSortedByArtist;
+  late Future<List<int>> futureTrackIdsSortedByAlbum;
+  late Future<List<int>> futureTrackIdsSortedByDuration;
+  late TrackSortBy trackSortBy = TrackSortBy.title;
+  late TrackSortOrder trackSortOrder = TrackSortOrder.ascending;
+
   String searchQuery = '';
   final player = AudioPlayer();
   TrackDTO? currentTrack;
@@ -73,7 +92,11 @@ class _MyAppState extends State<MyApp> {
 
     lastVolume = player.volume;
 
-    trackListFuture = getAllTracks();
+    futureTrackList = getAllTracks();
+    futureTrackIdsSortedByTitle = getAllTrackIdsSortedByTitle();
+    futureTrackIdsSortedByArtist = getAllTrackIdsSortedByArtist();
+    futureTrackIdsSortedByAlbum = getAllTrackIdsSortedByAlbum();
+    futureTrackIdsSortedByDuration = getAllTrackIdsSortedByDuration();
   }
 
   @override
@@ -106,6 +129,42 @@ class _MyAppState extends State<MyApp> {
               },
             ),
             actions: [
+              IconButton(
+                icon: Icon(
+                  trackSortBy == TrackSortBy.title
+                      ? Icons.sort_by_alpha
+                      : trackSortBy == TrackSortBy.artist
+                          ? Icons.people
+                          : trackSortBy == TrackSortBy.album
+                              ? Icons.album
+                              : Icons.timelapse,
+                ),
+                onPressed: () {
+                  setState(() {
+                    trackSortBy = trackSortBy == TrackSortBy.title
+                        ? TrackSortBy.artist
+                        : trackSortBy == TrackSortBy.artist
+                            ? TrackSortBy.album
+                            : trackSortBy == TrackSortBy.album
+                                ? TrackSortBy.duration
+                                : TrackSortBy.title;
+                  });
+                },
+              ),
+              IconButton(
+                icon: Icon(
+                  trackSortOrder == TrackSortOrder.ascending
+                      ? Icons.arrow_upward
+                      : Icons.arrow_downward,
+                ),
+                onPressed: () {
+                  setState(() {
+                    trackSortOrder = trackSortOrder == TrackSortOrder.ascending
+                        ? TrackSortOrder.descending
+                        : TrackSortOrder.ascending;
+                  });
+                },
+              ),
               volumeToggleButton(),
               volumeSlider(),
               IconButton(
@@ -128,7 +187,7 @@ class _MyAppState extends State<MyApp> {
                 onPressed: () {
                   deleteAllTracks().whenComplete(() => setState(() {
                         stopAndClear();
-                        trackListFuture = getAllTracks();
+                        futureTrackList = getAllTracks();
                       }));
                 },
               ),
@@ -354,7 +413,7 @@ class _MyAppState extends State<MyApp> {
               if (value != null) {
                 syncDirectory(mountPoint: value)
                     .whenComplete(() => setState(() {
-                          trackListFuture = getAllTracks();
+                          futureTrackList = getAllTracks();
                         }));
               }
             },
@@ -386,63 +445,107 @@ class _MyAppState extends State<MyApp> {
 
   FutureBuilder<List<TrackDTO>> trackList() {
     return FutureBuilder(
-      future: trackListFuture,
-      builder: (BuildContext context, AsyncSnapshot<List<TrackDTO>> snapshot) {
-        if (snapshot.connectionState == ConnectionState.done) {
-          if (snapshot.hasError) {
-            return Text('Error: ${snapshot.error}');
+      future: futureTrackList,
+      builder:
+          (BuildContext context, AsyncSnapshot<List<TrackDTO>> tracksSnapshot) {
+        if (tracksSnapshot.connectionState == ConnectionState.done) {
+          final startTime = DateTime.now();
+          if (tracksSnapshot.hasError) {
+            return Text('Error: ${tracksSnapshot.error}');
           }
 
-          if (snapshot.data == null) {
+          if (tracksSnapshot.data == null) {
             return const Center(child: Text('The tracks are in the void'));
           }
 
-          if (snapshot.data!.isEmpty) {
+          if (tracksSnapshot.data!.isEmpty) {
             return const Center(child: Text('No tracks found'));
           }
 
-          final tracks = snapshot.data!
-              .where(
-                  (track) => trackQueryFilter(query: searchQuery, track: track))
-              .toList();
+          return FutureBuilder(
+              future: trackSortBy == TrackSortBy.title
+                  ? futureTrackIdsSortedByTitle
+                  : trackSortBy == TrackSortBy.artist
+                      ? futureTrackIdsSortedByArtist
+                      : trackSortBy == TrackSortBy.album
+                          ? futureTrackIdsSortedByAlbum
+                          : futureTrackIdsSortedByDuration,
+              builder: (context, sortedTrackIdsSnapshot) {
+                if (sortedTrackIdsSnapshot.connectionState ==
+                    ConnectionState.done) {
+                  if (sortedTrackIdsSnapshot.hasError) {
+                    return Text('Error: ${sortedTrackIdsSnapshot.error}');
+                  }
 
-          return SuperListView.builder(
-            itemCount: tracks.length,
-            itemBuilder: (BuildContext context, int index) {
-              return ListTile(
-                dense: true,
-                leading: AspectRatio(
-                  aspectRatio: 1,
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.all(Radius.circular(4)),
-                    child: tracks[index].pictureId != null
-                        ? Image.file(
-                            File(
-                                "${getCachePath()}/${tracks[index].pictureId!}.jpg"),
-                            filterQuality: FilterQuality.medium,
-                            cacheHeight: 48,
-                            fit: BoxFit.cover)
-                        : Container(
-                            color: Colors.grey,
-                            child: const Icon(Icons.music_note),
+                  if (sortedTrackIdsSnapshot.data == null) {
+                    return const Center(
+                        child: Text('The tracks are in the void'));
+                  }
+
+                  List<TrackDTO> tracks = sortedTrackIdsSnapshot.data!
+                      .map((id) => tracksSnapshot.data!
+                          .firstWhere((track) => track.id == id))
+                      .toList();
+
+                  tracks = tracks
+                      .where((track) =>
+                          trackQueryFilter(query: searchQuery, track: track))
+                      .toList();
+
+                  if (trackSortOrder == TrackSortOrder.descending) {
+                    tracks = tracks.reversed.toList();
+                  }
+
+                  if (tracks.isEmpty) {
+                    return const Center(child: Text('No tracks found'));
+                  }
+
+                  print(
+                      'Track list build time: ${DateTime.now().difference(startTime).inMilliseconds}ms');
+
+                  return SuperListView.builder(
+                    itemCount: tracks.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      return ListTile(
+                        dense: true,
+                        leading: AspectRatio(
+                          aspectRatio: 1,
+                          child: ClipRRect(
+                            borderRadius:
+                                const BorderRadius.all(Radius.circular(4)),
+                            child: tracks[index].pictureId != null
+                                ? Image.file(
+                                    File(
+                                        "${getCachePath()}/${tracks[index].pictureId!}.jpg"),
+                                    filterQuality: FilterQuality.medium,
+                                    cacheHeight: 48,
+                                    fit: BoxFit.cover)
+                                : Container(
+                                    color: Colors.grey,
+                                    child: const Icon(Icons.music_note),
+                                  ),
                           ),
-                  ),
-                ),
-                title: Text(
-                  tracks[index].title ?? 'Unknown Track',
-                ),
-                subtitle: Text(tracks[index].artist ?? 'Unknown Artist'),
-                onTap: () {
-                  setState(() {
-                    setTrack(tracks[index]);
-                    play();
-                  });
-                },
-              );
-            },
-          );
+                        ),
+                        title: Text(
+                          tracks[index].title ?? 'Unknown Track',
+                        ),
+                        subtitle:
+                            Text(tracks[index].artist ?? 'Unknown Artist'),
+                        onTap: () {
+                          setState(() {
+                            setTrack(tracks[index]);
+                            play();
+                          });
+                        },
+                      );
+                    },
+                  );
+                } else {
+                  return const Center();
+                }
+              });
         } else {
-          return const Center(child: CircularProgressIndicator());
+          return const Center();
         }
       },
     );

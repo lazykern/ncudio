@@ -1,7 +1,7 @@
 use std::fs;
 
 use diesel::{
-    Connection, ExpressionMethods, JoinOnDsl, QueryDsl, RunQueryDsl, SelectableHelper, SqliteConnection
+    Connection, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl, RunQueryDsl, SelectableHelper, SqliteConnection
 };
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 
@@ -257,18 +257,76 @@ pub struct TrackDTO {
 }
 
 pub fn get_all_tracks() -> Vec<TrackDTO> {
-    use crate::schema::album::dsl as album_dsl;
-    use crate::schema::artist::dsl as artist_dsl;
     use crate::schema;
-    use crate::model;
 
     let conn = &mut establish_connection().unwrap();
 
     let tracks: Vec<Track> = schema::track::table.load(conn).unwrap();
 
-    let mut track_dtos = vec![];
+    tracks.into_iter().map(|track| populate_track(conn, track)).collect()
+}
 
-    for track in tracks {
+pub fn get_all_track_ids_sorted_by_title() -> Vec<i32> {
+    use crate::schema::track::dsl as track_dsl;
+
+    let conn = &mut establish_connection().unwrap();
+
+    track_dsl::track
+        .select(track_dsl::id)
+        .order_by(track_dsl::title)
+        .load(conn)
+        .unwrap()
+}
+
+pub fn get_all_track_ids_sorted_by_artist() -> Vec<i32> {
+    use crate::schema::track::dsl as track_dsl;
+    use crate::schema;
+
+    let conn = &mut establish_connection().unwrap();
+
+    track_dsl::track
+        .select(track_dsl::id)
+        .left_join(
+            schema::artist::table.on(schema::track::artist_id.eq(schema::artist::id.nullable())),
+        )
+        .order_by(schema::artist::name)
+        .load(conn)
+        .unwrap()
+}
+
+pub fn get_all_track_ids_sorted_by_album() -> Vec<i32> {
+    use crate::schema::track::dsl as track_dsl;
+    use crate::schema;
+
+    let conn = &mut establish_connection().unwrap();
+
+    track_dsl::track
+        .select(track_dsl::id)
+        .left_join(
+            schema::album::table.on(schema::track::album_id.eq(schema::album::id.nullable())),
+        )
+        .order_by(schema::album::name)
+        .load(conn)
+        .unwrap()
+}
+
+pub fn get_all_track_ids_sorted_by_duration() -> Vec<i32> {
+    use crate::schema::track::dsl as track_dsl;
+
+    let conn = &mut establish_connection().unwrap();
+
+    track_dsl::track
+        .select(track_dsl::id)
+        .order_by(track_dsl::duration_ms)
+        .load(conn)
+        .unwrap()
+}
+
+fn populate_track(conn: &mut SqliteConnection, track: Track) -> TrackDTO {
+    use crate::schema::album::dsl as album_dsl;
+    use crate::schema::artist::dsl as artist_dsl;
+    use crate::model;
+
         let artist: Option<model::Artist> = match track.artist_id {
             Some(artist_id) => artist_dsl::artist
                 .filter(artist_dsl::id.eq(artist_id))
@@ -285,7 +343,7 @@ pub fn get_all_tracks() -> Vec<TrackDTO> {
             None => None,
         };
 
-        let track_dto = TrackDTO {
+        TrackDTO {
             id: track.id,
             title: track.title,
             artist: artist.map(|a| a.name),
@@ -294,12 +352,7 @@ pub fn get_all_tracks() -> Vec<TrackDTO> {
             location: track.location,
             mount_point: track.mount_point,
             picture_id: track.picture_id,
-        };
-
-        track_dtos.push(track_dto);
-    }
-
-    track_dtos
+        }
 }
 
 pub fn delete_all_tracks() {
