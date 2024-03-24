@@ -7,9 +7,6 @@ use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
 type DB = diesel::sqlite::Sqlite;
-const CONFIG_PATH: &str = "/home/lazykern/.config/ncudio";
-const CACHE_PATH: &str = "/home/lazykern/.cache/ncudio";
-const DATA_PATH: &str = "/home/lazykern/.local/share/ncudio";
 
 use std::path::PathBuf;
 
@@ -21,26 +18,26 @@ use crate::model::{Album, Artist, NewTrack, Track};
 
 #[flutter_rust_bridge::frb(sync)]
 pub fn get_db_url() -> String {
-    format!("sqlite://{}/ncudio.db", DATA_PATH)
+    format!("sqlite://{}/ncudio.db", get_data_path())
 }
 
 #[flutter_rust_bridge::frb(sync)]
 pub fn get_config_path() -> String {
-    CONFIG_PATH.to_string()
+    dirs::config_dir().unwrap().join("ncudio").to_string_lossy().to_string()
 }
 
 #[flutter_rust_bridge::frb(sync)]
 pub fn get_cache_path() -> String {
-    CACHE_PATH.to_string()
+    dirs::cache_dir().unwrap().join("ncudio").to_string_lossy().to_string()
 }
 
 #[flutter_rust_bridge::frb(sync)]
 pub fn get_data_path() -> String {
-    DATA_PATH.to_string()
+    dirs::data_dir().unwrap().join("ncudio").to_string_lossy().to_string()
 }
 
 fn establish_connection() -> Result<SqliteConnection, diesel::ConnectionError> {
-    fs::create_dir_all(CONFIG_PATH).unwrap();
+    fs::create_dir_all(get_config_path()).unwrap();
     SqliteConnection::establish(&get_db_url())
 }
 
@@ -67,8 +64,9 @@ pub fn frb_init() {
 
 #[flutter_rust_bridge::frb(sync)]
 pub fn initialize_app() {
-    fs::create_dir_all(CACHE_PATH).unwrap();
-    fs::create_dir_all(DATA_PATH).unwrap();
+    fs::create_dir_all(get_cache_path()).unwrap();
+    fs::create_dir_all(get_data_path()).unwrap();
+    fs::create_dir_all(get_config_path()).unwrap();
 }
 
 #[flutter_rust_bridge::frb(sync)]
@@ -140,7 +138,7 @@ fn parse_music_file<P: AsRef<std::path::Path>>(path: P, mount_point: &P) -> Opti
     if let Some(picture) = tag.pictures().first() {
         let picture_id_digest = md5::compute(picture.data());
         let picture_id = format!("{:x}", picture_id_digest);
-        let mut picture_path = PathBuf::from(CACHE_PATH).join(&picture_id);
+        let mut picture_path = PathBuf::from(get_cache_path()).join(&picture_id);
 
         picture_path.set_extension("jpg");
         fs::write(&picture_path, picture.data()).ok();
