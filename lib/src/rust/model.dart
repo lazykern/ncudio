@@ -6,57 +6,54 @@
 import 'frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-class Track {
+class Album {
   final int id;
-  final String? pictureId;
-  final String? title;
-  final String? artist;
-  final String? album;
-  final int durationMs;
-  final String file;
-  final String directory;
-  final String mountPoint;
+  final String name;
+  final int? artistId;
   final DateTime createdAt;
 
-  const Track({
+  const Album({
     required this.id,
-    this.pictureId,
-    this.title,
-    this.artist,
-    this.album,
-    required this.durationMs,
-    required this.file,
-    required this.directory,
-    required this.mountPoint,
+    required this.name,
+    this.artistId,
     required this.createdAt,
   });
 
   @override
   int get hashCode =>
-      id.hashCode ^
-      pictureId.hashCode ^
-      title.hashCode ^
-      artist.hashCode ^
-      album.hashCode ^
-      durationMs.hashCode ^
-      file.hashCode ^
-      directory.hashCode ^
-      mountPoint.hashCode ^
-      createdAt.hashCode;
+      id.hashCode ^ name.hashCode ^ artistId.hashCode ^ createdAt.hashCode;
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is Track &&
+      other is Album &&
           runtimeType == other.runtimeType &&
           id == other.id &&
-          pictureId == other.pictureId &&
-          title == other.title &&
-          artist == other.artist &&
-          album == other.album &&
-          durationMs == other.durationMs &&
-          file == other.file &&
-          directory == other.directory &&
-          mountPoint == other.mountPoint &&
+          name == other.name &&
+          artistId == other.artistId &&
+          createdAt == other.createdAt;
+}
+
+class Artist {
+  final int id;
+  final String name;
+  final DateTime createdAt;
+
+  const Artist({
+    required this.id,
+    required this.name,
+    required this.createdAt,
+  });
+
+  @override
+  int get hashCode => id.hashCode ^ name.hashCode ^ createdAt.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Artist &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          name == other.name &&
           createdAt == other.createdAt;
 }

@@ -16,7 +16,7 @@ pub struct NewTrack {
     pub mount_point: String,
 }
 
-#[derive(diesel::Queryable, diesel::Selectable, diesel::Identifiable, diesel::Associations)]
+#[derive(diesel::Queryable, diesel::Selectable, diesel::Identifiable, diesel::Associations, Clone)]
 #[belongs_to(Album, foreign_key = "album_id")]
 #[belongs_to(Artist, foreign_key = "artist_id")]
 #[diesel(table_name = track)]
@@ -42,7 +42,7 @@ pub struct NewAlbum {
 }
 
 
-#[derive(diesel::Queryable, diesel::Selectable, diesel::Identifiable)]
+#[derive(diesel::Queryable, diesel::Selectable, diesel::Identifiable, Clone)]
 #[diesel(table_name = album)]
 pub struct Album {
     pub id: i32,
@@ -57,7 +57,7 @@ pub struct NewArtist {
     pub name: String,
 }
 
-#[derive(diesel::Queryable, diesel::Selectable, diesel::Identifiable)]
+#[derive(diesel::Queryable, diesel::Selectable, diesel::Identifiable, Clone)]
 #[diesel(table_name = artist)]
 pub struct Artist {
     pub id: i32,

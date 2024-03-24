@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:super_context_menu/super_context_menu.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_media_kit/just_audio_media_kit.dart';
 import 'package:ncudio/src/rust/api/simple.dart';
@@ -90,6 +91,8 @@ class _MyAppState extends State<MyApp> {
     initializeDb();
 
     lastVolume = player.volume;
+
+    player.setAudioSource(playlist.value);
 
     refreshTrackList();
   }
@@ -288,7 +291,8 @@ class _MyAppState extends State<MyApp> {
             return const Center();
           }
 
-          final currentTrack = sequenceState.currentSource!.tag as TrackDTO;
+          final currentTrack = playlist
+              .value.sequence[sequenceState.currentIndex].tag as TrackDTO;
 
           return Row(
             mainAxisAlignment: MainAxisAlignment.start,
@@ -343,13 +347,13 @@ class _MyAppState extends State<MyApp> {
                             fontWeight: FontWeight.bold,
                             overflow: TextOverflow.fade,
                           )),
-                      SelectableText(currentTrack.artist ?? '',
+                      SelectableText(currentTrack.artist?.name ?? '',
                           maxLines: 1,
                           style: const TextStyle(
                               fontWeight: FontWeight.normal,
                               overflow: TextOverflow.fade,
                               fontSize: 11)),
-                      SelectableText(currentTrack.album ?? '',
+                      SelectableText(currentTrack.album?.name ?? '',
                           maxLines: 1,
                           style: const TextStyle(
                             fontWeight: FontWeight.normal,
@@ -623,53 +627,80 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
-  ListTile trackListTile(TrackDTO track) {
-    return ListTile(
-      dense: true,
-      leading: AspectRatio(
-        aspectRatio: 1,
-        child: ClipRRect(
-          borderRadius: const BorderRadius.all(Radius.circular(4)),
-          child: track.pictureId != null
-              ? Image.file(
-                  File("${getCachePath()}/${track.pictureId!}.jpg"),
-                  filterQuality: FilterQuality.medium,
-                  cacheHeight: 48,
-                  fit: BoxFit.cover,
-                  frameBuilder:
-                      (context, child, frame, wasSynchronouslyLoaded) {
-                    if (wasSynchronouslyLoaded) {
-                      return child;
-                    }
-                    return AnimatedOpacity(
-                      opacity: frame == null ? 0 : 1,
-                      duration: const Duration(milliseconds: 1000),
-                      curve: Curves.easeOut,
-                      child: child,
-                    );
-                  },
-                )
-              : Container(
-                  color: Colors.grey,
-                  child: const Icon(Icons.music_note),
-                ),
-        ),
-      ),
-      title: Text(
-        track.title ?? 'Unknown Track',
-      ),
-      subtitle: Text(track.artist ?? 'Unknown Artist'),
-      trailing: Text(
-        durationToString(duration: Duration(milliseconds: track.durationMs)),
-      ),
-      onTap: () {
-        if (HardwareKeyboard.instance.isShiftPressed) {
-          addTrack(track);
-        } else {
-          setTrack(track);
-          play();
-        }
+  Widget trackListTile(TrackDTO track) {
+    return ContextMenuWidget(
+      menuProvider: (MenuRequest request) {
+        return Menu(children: [
+          MenuAction(
+              callback: () {
+                setTrack(track);
+                play();
+              },
+              title: "Play",
+              image: MenuImage.icon(Icons.play_arrow)),
+          MenuAction(
+              title: "Add to Queue",
+              callback: () {
+                addTrack(track);
+              },
+              image: MenuImage.icon(Icons.queue)),
+          MenuAction(
+              title: "Add Album to Queue",
+              callback: () {
+                findTrackByAlbum(albumId: track.album!.id).then((tracks) {
+                  addTracks(tracks);
+                });
+              },
+              image: MenuImage.icon(Icons.queue_music)),
+        ]);
       },
+      child: ListTile(
+        dense: true,
+        leading: AspectRatio(
+          aspectRatio: 1,
+          child: ClipRRect(
+            borderRadius: const BorderRadius.all(Radius.circular(4)),
+            child: track.pictureId != null
+                ? Image.file(
+                    File("${getCachePath()}/${track.pictureId!}.jpg"),
+                    filterQuality: FilterQuality.medium,
+                    cacheHeight: 48,
+                    fit: BoxFit.cover,
+                    frameBuilder:
+                        (context, child, frame, wasSynchronouslyLoaded) {
+                      if (wasSynchronouslyLoaded) {
+                        return child;
+                      }
+                      return AnimatedOpacity(
+                        opacity: frame == null ? 0 : 1,
+                        duration: const Duration(milliseconds: 1000),
+                        curve: Curves.easeOut,
+                        child: child,
+                      );
+                    },
+                  )
+                : Container(
+                    color: Colors.grey,
+                    child: const Icon(Icons.music_note),
+                  ),
+          ),
+        ),
+        title: Text(
+          track.title ?? 'Unknown Track',
+        ),
+        subtitle: Text(track.artist?.name ?? 'Unknown Artist'),
+        trailing: Text(
+          durationToString(duration: Duration(milliseconds: track.durationMs)),
+        ),
+        onTap: () {
+          if (HardwareKeyboard.instance.isShiftPressed) {
+            addTrack(track);
+          } else {
+            setTrack(track);
+            play();
+          }
+        },
+      ),
     );
   }
 
@@ -690,8 +721,52 @@ class _MyAppState extends State<MyApp> {
   }
 
   void addTrack(TrackDTO track) {
+    playlist.value.add(AudioSource.uri(Uri.file(track.location), tag: track));
+
+    if (player.sequenceState?.currentSource == null) {
+      player.setAudioSource(playlist.value,
+          initialIndex: playlist.value.length - 1);
+      return;
+    }
+
+    if (player.currentIndex != null &&
+        !player.playing &&
+        player.duration != null &&
+        player.position.inSeconds == player.duration!.inSeconds) {
+      player.setAudioSource(playlist.value,
+          initialIndex: player.currentIndex! + 1);
+      return;
+    }
+  }
+
+  void addTracks(List<TrackDTO> tracks) {
+    for (var track in tracks) {
+      playlist.value.add(AudioSource.uri(Uri.file(track.location), tag: track));
+    }
+
+    if (player.currentIndex != null &&
+        player.sequenceState?.currentSource == null) {
+      player.setAudioSource(playlist.value, initialIndex: player.currentIndex!);
+      return;
+    }
+    if (player.currentIndex != null &&
+        !player.playing &&
+        player.duration != null &&
+        player.position.inSeconds == player.duration!.inSeconds) {
+      player.setAudioSource(playlist.value,
+          initialIndex: player.currentIndex! + 1);
+      return;
+    }
+  }
+
+  void addTrackNext(TrackDTO track) {
     final source = AudioSource.uri(Uri.file(track.location), tag: track);
-    playlist.value.add(source);
+    if (player.currentIndex == null) {
+      playlist.value.add(source);
+      return;
+    }
+
+    playlist.value.insert(player.currentIndex! + 1, source);
   }
 
   void play() {

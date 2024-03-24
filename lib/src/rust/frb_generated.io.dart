@@ -9,6 +9,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:ffi' as ffi;
 import 'frb_generated.dart';
+import 'model.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_io.dart';
 
 abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
@@ -23,10 +24,25 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Duration dco_decode_Chrono_Duration(dynamic raw);
 
   @protected
+  DateTime dco_decode_Chrono_Naive(dynamic raw);
+
+  @protected
   String dco_decode_String(dynamic raw);
 
   @protected
+  Album dco_decode_album(dynamic raw);
+
+  @protected
+  Artist dco_decode_artist(dynamic raw);
+
+  @protected
   bool dco_decode_bool(dynamic raw);
+
+  @protected
+  Album dco_decode_box_autoadd_album(dynamic raw);
+
+  @protected
+  Artist dco_decode_box_autoadd_artist(dynamic raw);
 
   @protected
   int dco_decode_box_autoadd_i_32(dynamic raw);
@@ -53,6 +69,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   String? dco_decode_opt_String(dynamic raw);
 
   @protected
+  Album? dco_decode_opt_box_autoadd_album(dynamic raw);
+
+  @protected
+  Artist? dco_decode_opt_box_autoadd_artist(dynamic raw);
+
+  @protected
   int? dco_decode_opt_box_autoadd_i_32(dynamic raw);
 
   @protected
@@ -68,10 +90,25 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Duration sse_decode_Chrono_Duration(SseDeserializer deserializer);
 
   @protected
+  DateTime sse_decode_Chrono_Naive(SseDeserializer deserializer);
+
+  @protected
   String sse_decode_String(SseDeserializer deserializer);
 
   @protected
+  Album sse_decode_album(SseDeserializer deserializer);
+
+  @protected
+  Artist sse_decode_artist(SseDeserializer deserializer);
+
+  @protected
   bool sse_decode_bool(SseDeserializer deserializer);
+
+  @protected
+  Album sse_decode_box_autoadd_album(SseDeserializer deserializer);
+
+  @protected
+  Artist sse_decode_box_autoadd_artist(SseDeserializer deserializer);
 
   @protected
   int sse_decode_box_autoadd_i_32(SseDeserializer deserializer);
@@ -98,6 +135,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   String? sse_decode_opt_String(SseDeserializer deserializer);
 
   @protected
+  Album? sse_decode_opt_box_autoadd_album(SseDeserializer deserializer);
+
+  @protected
+  Artist? sse_decode_opt_box_autoadd_artist(SseDeserializer deserializer);
+
+  @protected
   int? sse_decode_opt_box_autoadd_i_32(SseDeserializer deserializer);
 
   @protected
@@ -113,10 +156,25 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_Chrono_Duration(Duration self, SseSerializer serializer);
 
   @protected
+  void sse_encode_Chrono_Naive(DateTime self, SseSerializer serializer);
+
+  @protected
   void sse_encode_String(String self, SseSerializer serializer);
 
   @protected
+  void sse_encode_album(Album self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_artist(Artist self, SseSerializer serializer);
+
+  @protected
   void sse_encode_bool(bool self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_album(Album self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_artist(Artist self, SseSerializer serializer);
 
   @protected
   void sse_encode_box_autoadd_i_32(int self, SseSerializer serializer);
@@ -144,6 +202,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_opt_String(String? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_box_autoadd_album(Album? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_box_autoadd_artist(
+      Artist? self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_box_autoadd_i_32(int? self, SseSerializer serializer);

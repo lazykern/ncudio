@@ -4,6 +4,7 @@
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
 import '../frb_generated.dart';
+import '../model.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 // The type `ParsedTrack` is not used by any `pub` functions, thus it is ignored.
@@ -46,14 +47,17 @@ Future<Int32List> getAllTrackIdsSortedByDuration({dynamic hint}) =>
 Future<void> deleteAllTracks({dynamic hint}) =>
     RustLib.instance.api.deleteAllTracks(hint: hint);
 
+Future<List<TrackDTO>> findTrackByAlbum({required int albumId, dynamic hint}) =>
+    RustLib.instance.api.findTrackByAlbum(albumId: albumId, hint: hint);
+
 Future<String?> pickDirectory({dynamic hint}) =>
     RustLib.instance.api.pickDirectory(hint: hint);
 
 class TrackDTO {
   final int id;
   final String? title;
-  final String? artist;
-  final String? album;
+  final Artist? artist;
+  final Album? album;
   final int? number;
   final int? disc;
   final int durationMs;

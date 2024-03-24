@@ -6,8 +6,8 @@ use super::simple::TrackDTO;
 pub fn track_query_filter_condition(query: String, track: TrackDTO) -> bool {
     let query = query.to_lowercase();
     let track_name = track.title.unwrap_or_default().to_lowercase();
-    let track_artist = track.artist.unwrap_or_default().to_lowercase();
-    let track_album = track.album.unwrap_or_default().to_lowercase();
+    let track_artist = track.artist.map(|artist| artist.name).unwrap_or_default().to_lowercase();
+    let track_album = track.album.map(|album| album.name).unwrap_or_default().to_lowercase();
 
     if track_name.contains(&query) || track_artist.contains(&query) || track_album.contains(&query) {
         return true;

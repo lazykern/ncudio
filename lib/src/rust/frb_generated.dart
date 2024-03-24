@@ -8,6 +8,7 @@ import 'api/utils.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'frb_generated.io.dart' if (dart.library.html) 'frb_generated.web.dart';
+import 'model.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 /// Main entrypoint of the Rust API
@@ -66,6 +67,8 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 
 abstract class RustLibApi extends BaseApi {
   Future<void> deleteAllTracks({dynamic hint});
+
+  Future<List<TrackDTO>> findTrackByAlbum({required int albumId, dynamic hint});
 
   Future<void> frbInit({dynamic hint});
 
@@ -131,6 +134,32 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kDeleteAllTracksConstMeta => const TaskConstMeta(
         debugName: "delete_all_tracks",
         argNames: [],
+      );
+
+  @override
+  Future<List<TrackDTO>> findTrackByAlbum(
+      {required int albumId, dynamic hint}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_i_32(albumId, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 15, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_list_track_dto,
+        decodeErrorData: null,
+      ),
+      constMeta: kFindTrackByAlbumConstMeta,
+      argValues: [albumId],
+      apiImpl: this,
+      hint: hint,
+    ));
+  }
+
+  TaskConstMeta get kFindTrackByAlbumConstMeta => const TaskConstMeta(
+        debugName: "find_track_by_album",
+        argNames: ["albumId"],
       );
 
   @override
@@ -425,7 +454,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 15, port: port_);
+            funcId: 16, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_opt_String,
@@ -474,7 +503,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_Chrono_Duration(duration, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 17)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 18)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_String,
@@ -500,7 +529,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(query, serializer);
         sse_encode_box_autoadd_track_dto(track, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 16)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 17)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_bool,
@@ -525,15 +554,60 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  DateTime dco_decode_Chrono_Naive(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dcoDecodeTimestamp(ts: dco_decode_i_64(raw).toInt(), isUtc: true);
+  }
+
+  @protected
   String dco_decode_String(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as String;
   }
 
   @protected
+  Album dco_decode_album(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return Album(
+      id: dco_decode_i_32(arr[0]),
+      name: dco_decode_String(arr[1]),
+      artistId: dco_decode_opt_box_autoadd_i_32(arr[2]),
+      createdAt: dco_decode_Chrono_Naive(arr[3]),
+    );
+  }
+
+  @protected
+  Artist dco_decode_artist(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return Artist(
+      id: dco_decode_i_32(arr[0]),
+      name: dco_decode_String(arr[1]),
+      createdAt: dco_decode_Chrono_Naive(arr[2]),
+    );
+  }
+
+  @protected
   bool dco_decode_bool(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as bool;
+  }
+
+  @protected
+  Album dco_decode_box_autoadd_album(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_album(raw);
+  }
+
+  @protected
+  Artist dco_decode_box_autoadd_artist(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_artist(raw);
   }
 
   @protected
@@ -585,6 +659,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Album? dco_decode_opt_box_autoadd_album(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_album(raw);
+  }
+
+  @protected
+  Artist? dco_decode_opt_box_autoadd_artist(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_artist(raw);
+  }
+
+  @protected
   int? dco_decode_opt_box_autoadd_i_32(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_box_autoadd_i_32(raw);
@@ -599,8 +685,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     return TrackDTO(
       id: dco_decode_i_32(arr[0]),
       title: dco_decode_opt_String(arr[1]),
-      artist: dco_decode_opt_String(arr[2]),
-      album: dco_decode_opt_String(arr[3]),
+      artist: dco_decode_opt_box_autoadd_artist(arr[2]),
+      album: dco_decode_opt_box_autoadd_album(arr[3]),
       number: dco_decode_opt_box_autoadd_i_32(arr[4]),
       disc: dco_decode_opt_box_autoadd_i_32(arr[5]),
       durationMs: dco_decode_i_32(arr[6]),
@@ -630,6 +716,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  DateTime sse_decode_Chrono_Naive(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_64(deserializer);
+    return DateTime.fromMicrosecondsSinceEpoch(inner, isUtc: true);
+  }
+
+  @protected
   String sse_decode_String(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var inner = sse_decode_list_prim_u_8_strict(deserializer);
@@ -637,9 +730,44 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Album sse_decode_album(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_id = sse_decode_i_32(deserializer);
+    var var_name = sse_decode_String(deserializer);
+    var var_artistId = sse_decode_opt_box_autoadd_i_32(deserializer);
+    var var_createdAt = sse_decode_Chrono_Naive(deserializer);
+    return Album(
+        id: var_id,
+        name: var_name,
+        artistId: var_artistId,
+        createdAt: var_createdAt);
+  }
+
+  @protected
+  Artist sse_decode_artist(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_id = sse_decode_i_32(deserializer);
+    var var_name = sse_decode_String(deserializer);
+    var var_createdAt = sse_decode_Chrono_Naive(deserializer);
+    return Artist(id: var_id, name: var_name, createdAt: var_createdAt);
+  }
+
+  @protected
   bool sse_decode_bool(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getUint8() != 0;
+  }
+
+  @protected
+  Album sse_decode_box_autoadd_album(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_album(deserializer));
+  }
+
+  @protected
+  Artist sse_decode_box_autoadd_artist(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_artist(deserializer));
   }
 
   @protected
@@ -704,6 +832,28 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Album? sse_decode_opt_box_autoadd_album(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_album(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  Artist? sse_decode_opt_box_autoadd_artist(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_artist(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
   int? sse_decode_opt_box_autoadd_i_32(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -719,8 +869,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_id = sse_decode_i_32(deserializer);
     var var_title = sse_decode_opt_String(deserializer);
-    var var_artist = sse_decode_opt_String(deserializer);
-    var var_album = sse_decode_opt_String(deserializer);
+    var var_artist = sse_decode_opt_box_autoadd_artist(deserializer);
+    var var_album = sse_decode_opt_box_autoadd_album(deserializer);
     var var_number = sse_decode_opt_box_autoadd_i_32(deserializer);
     var var_disc = sse_decode_opt_box_autoadd_i_32(deserializer);
     var var_durationMs = sse_decode_i_32(deserializer);
@@ -758,15 +908,50 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_Chrono_Naive(DateTime self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_64(self.microsecondsSinceEpoch, serializer);
+  }
+
+  @protected
   void sse_encode_String(String self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_list_prim_u_8_strict(utf8.encoder.convert(self), serializer);
   }
 
   @protected
+  void sse_encode_album(Album self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.id, serializer);
+    sse_encode_String(self.name, serializer);
+    sse_encode_opt_box_autoadd_i_32(self.artistId, serializer);
+    sse_encode_Chrono_Naive(self.createdAt, serializer);
+  }
+
+  @protected
+  void sse_encode_artist(Artist self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.id, serializer);
+    sse_encode_String(self.name, serializer);
+    sse_encode_Chrono_Naive(self.createdAt, serializer);
+  }
+
+  @protected
   void sse_encode_bool(bool self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putUint8(self ? 1 : 0);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_album(Album self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_album(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_artist(Artist self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_artist(self, serializer);
   }
 
   @protected
@@ -831,6 +1016,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_opt_box_autoadd_album(Album? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_album(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_artist(
+      Artist? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_artist(self, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_opt_box_autoadd_i_32(int? self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -845,8 +1051,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.id, serializer);
     sse_encode_opt_String(self.title, serializer);
-    sse_encode_opt_String(self.artist, serializer);
-    sse_encode_opt_String(self.album, serializer);
+    sse_encode_opt_box_autoadd_artist(self.artist, serializer);
+    sse_encode_opt_box_autoadd_album(self.album, serializer);
     sse_encode_opt_box_autoadd_i_32(self.number, serializer);
     sse_encode_opt_box_autoadd_i_32(self.disc, serializer);
     sse_encode_i_32(self.durationMs, serializer);

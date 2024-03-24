@@ -129,14 +129,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "7.0.0"
-  equatable:
-    dependency: transitive
-    description:
-      name: equatable
-      sha256: c2b87cb7756efdf69892005af546c56c0b5037f54d2a88269b4f347a505e3ca2
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.0.5"
   fading_edge_scrollview:
     dependency: transitive
     description:
@@ -190,14 +182,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  flutter_context_menu:
-    dependency: "direct main"
-    description:
-      name: flutter_context_menu
-      sha256: "9f220a8fa0290c68e38000d6d62a0dc4555d490c15a5bd856a6e6d255d81b8dc"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.1.3"
   flutter_driver:
     dependency: transitive
     description: flutter
@@ -463,14 +447,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.11.0"
-  nested:
-    dependency: transitive
-    description:
-      name: nested
-      sha256: "03bac4c528c64c95c722ec99280375a6f2fc708eec17c7b3f07253b626cd2a20"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.0.0"
   package_config:
     dependency: transitive
     description:
@@ -583,14 +559,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "5.0.2"
-  provider:
-    dependency: transitive
-    description:
-      name: provider
-      sha256: c8a055ee5ce3fd98d6fc872478b03823ffdb448699c6ebdbbc71d59b596fd48c
-      url: "https://pub.dev"
-    source: hosted
-    version: "6.1.2"
   quiver:
     dependency: transitive
     description:
@@ -691,14 +659,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.8.5"
+  super_context_menu:
+    dependency: "direct main"
+    description:
+      name: super_context_menu
+      sha256: aa47028b56ad165d4b6090ece9406c9679e7a7abbd78701c8656ce30b7f1c0dc
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.8.9"
   super_native_extensions:
     dependency: transitive
     description:
       name: super_native_extensions
-      sha256: f96db6b137a0b135e43034289bb55ca6447b65225076036e81f97ebb6381ffeb
+      sha256: "9ebae48891159d3365d342d6d43abeb5b702758ed30d2b0cc6c125fa0ad577e3"
       url: "https://pub.dev"
     source: hosted
-    version: "0.8.5"
+    version: "0.8.9"
   super_sliver_list:
     dependency: "direct main"
     description:
@@ -791,10 +767,10 @@ packages:
     dependency: transitive
     description:
       name: web
-      sha256: "97da13628db363c635202ad97068d47c5b8aa555808e7a9411963c533b449b27"
+      sha256: "1d9158c616048c38f712a6646e317a3426da10e884447626167240d45209cbad"
       url: "https://pub.dev"
     source: hosted
-    version: "0.5.1"
+    version: "0.5.0"
   webdriver:
     dependency: transitive
     description:

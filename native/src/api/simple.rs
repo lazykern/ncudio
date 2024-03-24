@@ -1,7 +1,7 @@
-use std::fs;
+use std::{collections::HashMap, fs, ops::Deref};
 
 use diesel::{
-    Connection, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl, RunQueryDsl, SqliteConnection
+    BoolExpressionMethods, Connection, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl, RunQueryDsl, SqliteConnection
 };
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 
@@ -17,7 +17,7 @@ use jwalk::WalkDir;
 use lofty::{Accessor, AudioFile, Probe, TaggedFileExt};
 use rayon::iter::{ParallelBridge, ParallelIterator};
 
-use crate::model::{NewTrack, Track};
+use crate::model::{Album, Artist, NewTrack, Track};
 
 #[flutter_rust_bridge::frb(sync)]
 pub fn get_db_url() -> String {
@@ -256,8 +256,8 @@ pub fn sync_directory(mount_point: String) {
 pub struct TrackDTO {
     pub id: i32,
     pub title: Option<String>,
-    pub artist: Option<String>,
-    pub album: Option<String>,
+    pub artist: Option<Artist>,
+    pub album: Option<Album>,
     pub number: Option<i32>,
     pub disc: Option<i32>,
     pub duration_ms: i32,
@@ -273,7 +273,7 @@ pub fn get_all_tracks() -> Vec<TrackDTO> {
 
     let tracks: Vec<Track> = schema::track::table.load(conn).unwrap();
 
-    tracks.into_iter().map(|track| populate_track(conn, track)).collect()
+    populate_tracks(conn, tracks)
 }
 
 pub fn get_all_track_ids_sorted_by_title() -> Vec<i32> {
@@ -283,7 +283,7 @@ pub fn get_all_track_ids_sorted_by_title() -> Vec<i32> {
 
     track_dsl::track
         .select(track_dsl::id)
-        .order_by((track_dsl::title, track_dsl::album_id, track_dsl::number))
+        .order_by((track_dsl::title, track_dsl::album_id, track_dsl::artist_id, track_dsl::disc, track_dsl::number))
         .load(conn)
         .unwrap()
 }
@@ -299,7 +299,7 @@ pub fn get_all_track_ids_sorted_by_artist() -> Vec<i32> {
         .left_join(
             schema::artist::table.on(schema::track::artist_id.eq(schema::artist::id.nullable())),
         )
-        .order_by((schema::artist::name, schema::track::album_id, schema::track::number))
+        .order_by((schema::artist::name, schema::track::album_id, schema::track::disc, schema::track::number))
         .load(conn)
         .unwrap()
 }
@@ -315,7 +315,7 @@ pub fn get_all_track_ids_sorted_by_album() -> Vec<i32> {
         .left_join(
             schema::album::table.on(schema::track::album_id.eq(schema::album::id.nullable())),
         )
-        .order_by((schema::album::name, schema::track::artist_id, schema::track::number))
+        .order_by((schema::album::name, schema::track::disc, schema::track::number))
         .load(conn)
         .unwrap()
 }
@@ -332,39 +332,74 @@ pub fn get_all_track_ids_sorted_by_duration() -> Vec<i32> {
         .unwrap()
 }
 
-fn populate_track(conn: &mut SqliteConnection, track: Track) -> TrackDTO {
+fn populate_tracks(conn: &mut SqliteConnection, tracks: Vec<Track>) -> Vec<TrackDTO> {
     use crate::schema::album::dsl as album_dsl;
     use crate::schema::artist::dsl as artist_dsl;
-    use crate::model;
 
-        let artist: Option<model::Artist> = match track.artist_id {
-            Some(artist_id) => artist_dsl::artist
-                .filter(artist_dsl::id.eq(artist_id))
-                .first(conn)
-                .ok(),
+    let mut artist_cache: HashMap<i32, Artist> = HashMap::new();
+    let mut album_cache:HashMap<i32, Album> = HashMap::new();
+    let mut track_dtos = Vec::new();
+
+    for track in tracks {
+        let artist: Option<Artist> = match track.artist_id {
+            Some(artist_id) => {
+                if let Some(artist) = artist_cache.get(&artist_id) {
+                    Some(artist.clone())
+                } else {
+                    let artist: Option<Artist> = artist_dsl::artist
+                        .filter(artist_dsl::id.eq(artist_id))
+                        .first(conn)
+                        .ok();
+
+                    match artist {
+                        Some(artist) => {
+                            artist_cache.insert(artist_id, artist.clone());
+                            Some(artist)
+                        }
+                        None => None,
+                    }
+                }
+            }
             None => None,
         };
 
-        let album: Option<model::Album> = match track.album_id {
-            Some(album_id) => album_dsl::album
-                .filter(album_dsl::id.eq(album_id))
-                .first(conn)
-                .ok(),
+        let album = match track.album_id {
+            Some(album_id) => {
+                if let Some(album) = album_cache.get(&album_id) {
+                    Some(album.clone())
+                } else {
+                    let album: Option<Album> = album_dsl::album
+                        .filter(album_dsl::id.eq(album_id))
+                        .first(conn)
+                        .ok();
+
+                    match album {
+                        Some(album) => {
+                            album_cache.insert(album_id, album.clone());
+                            Some(album)
+                        }
+                        None => None,
+                    }
+                }
+            }
             None => None,
         };
 
-        TrackDTO {
+        track_dtos.push(TrackDTO {
             id: track.id,
             title: track.title,
-            artist: artist.map(|a| a.name),
-            album: album.map(|a| a.name),
+            artist,
+            album,
             number: track.number,
             disc: track.disc,
             duration_ms: track.duration_ms,
             location: track.location,
             mount_point: track.mount_point,
             picture_id: track.picture_id,
-        }
+        });
+    };
+
+    track_dtos
 }
 
 pub fn delete_all_tracks() {
@@ -375,6 +410,19 @@ pub fn delete_all_tracks() {
     diesel::delete(track_dsl::track).execute(conn).unwrap();
 }
 
+pub fn find_track_by_album(album_id: i32) -> Vec<TrackDTO> {
+    use crate::schema::track::dsl as track_dsl;
+
+    let conn = &mut establish_connection().unwrap();
+
+    let tracks: Vec<Track> = track_dsl::track
+        .filter(track_dsl::album_id.eq(album_id))
+        .order_by((track_dsl::number, track_dsl::disc))
+        .load(conn)
+        .unwrap();
+
+    populate_tracks(conn, tracks)
+}
 
 pub fn pick_directory() -> Option<String> {
     rfd::FileDialog::new()
