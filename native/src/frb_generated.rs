@@ -486,130 +486,14 @@ fn wire_sync_directory_impl(
         },
     )
 }
-fn wire_sort_tracks_by_album_impl(
+fn wire_track_query_filter_condition_impl(
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
     data_len_: i32,
 ) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
         flutter_rust_bridge::for_generated::TaskInfo {
-            debug_name: "sort_tracks_by_album",
-            port: None,
-            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
-        },
-        move || {
-            let message = unsafe {
-                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
-                    ptr_,
-                    rust_vec_len_,
-                    data_len_,
-                )
-            };
-            let mut deserializer =
-                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_tracks = <Vec<crate::api::simple::TrackDTO>>::sse_decode(&mut deserializer);
-            deserializer.end();
-            transform_result_sse((move || {
-                Result::<_, ()>::Ok(crate::api::utils::sort_tracks_by_album(api_tracks))
-            })())
-        },
-    )
-}
-fn wire_sort_tracks_by_artist_impl(
-    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
-    rust_vec_len_: i32,
-    data_len_: i32,
-) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
-        flutter_rust_bridge::for_generated::TaskInfo {
-            debug_name: "sort_tracks_by_artist",
-            port: None,
-            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
-        },
-        move || {
-            let message = unsafe {
-                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
-                    ptr_,
-                    rust_vec_len_,
-                    data_len_,
-                )
-            };
-            let mut deserializer =
-                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_tracks = <Vec<crate::api::simple::TrackDTO>>::sse_decode(&mut deserializer);
-            deserializer.end();
-            transform_result_sse((move || {
-                Result::<_, ()>::Ok(crate::api::utils::sort_tracks_by_artist(api_tracks))
-            })())
-        },
-    )
-}
-fn wire_sort_tracks_by_duration_impl(
-    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
-    rust_vec_len_: i32,
-    data_len_: i32,
-) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
-        flutter_rust_bridge::for_generated::TaskInfo {
-            debug_name: "sort_tracks_by_duration",
-            port: None,
-            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
-        },
-        move || {
-            let message = unsafe {
-                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
-                    ptr_,
-                    rust_vec_len_,
-                    data_len_,
-                )
-            };
-            let mut deserializer =
-                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_tracks = <Vec<crate::api::simple::TrackDTO>>::sse_decode(&mut deserializer);
-            deserializer.end();
-            transform_result_sse((move || {
-                Result::<_, ()>::Ok(crate::api::utils::sort_tracks_by_duration(api_tracks))
-            })())
-        },
-    )
-}
-fn wire_sort_tracks_by_title_impl(
-    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
-    rust_vec_len_: i32,
-    data_len_: i32,
-) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
-        flutter_rust_bridge::for_generated::TaskInfo {
-            debug_name: "sort_tracks_by_title",
-            port: None,
-            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
-        },
-        move || {
-            let message = unsafe {
-                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
-                    ptr_,
-                    rust_vec_len_,
-                    data_len_,
-                )
-            };
-            let mut deserializer =
-                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_tracks = <Vec<crate::api::simple::TrackDTO>>::sse_decode(&mut deserializer);
-            deserializer.end();
-            transform_result_sse((move || {
-                Result::<_, ()>::Ok(crate::api::utils::sort_tracks_by_title(api_tracks))
-            })())
-        },
-    )
-}
-fn wire_track_query_filter_impl(
-    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
-    rust_vec_len_: i32,
-    data_len_: i32,
-) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
-        flutter_rust_bridge::for_generated::TaskInfo {
-            debug_name: "track_query_filter",
+            debug_name: "track_query_filter_condition",
             port: None,
             mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
         },
@@ -627,7 +511,9 @@ fn wire_track_query_filter_impl(
             let api_track = <crate::api::simple::TrackDTO>::sse_decode(&mut deserializer);
             deserializer.end();
             transform_result_sse((move || {
-                Result::<_, ()>::Ok(crate::api::utils::track_query_filter(api_query, api_track))
+                Result::<_, ()>::Ok(crate::api::utils::track_query_filter_condition(
+                    api_query, api_track,
+                ))
             })())
         },
     )
@@ -776,11 +662,7 @@ fn pde_ffi_dispatcher_sync_impl(
         1 => wire_get_db_url_impl(ptr, rust_vec_len, data_len),
         7 => wire_initialize_db_impl(ptr, rust_vec_len, data_len),
         6 => wire_initialze_app_impl(ptr, rust_vec_len, data_len),
-        19 => wire_sort_tracks_by_album_impl(ptr, rust_vec_len, data_len),
-        18 => wire_sort_tracks_by_artist_impl(ptr, rust_vec_len, data_len),
-        20 => wire_sort_tracks_by_duration_impl(ptr, rust_vec_len, data_len),
-        17 => wire_sort_tracks_by_title_impl(ptr, rust_vec_len, data_len),
-        16 => wire_track_query_filter_impl(ptr, rust_vec_len, data_len),
+        16 => wire_track_query_filter_condition_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }

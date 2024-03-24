@@ -1,7 +1,7 @@
 use super::simple::TrackDTO;
 
 #[flutter_rust_bridge::frb(sync)]
-pub fn track_query_filter(query: String, track: TrackDTO) -> bool {
+pub fn track_query_filter_condition(query: String, track: TrackDTO) -> bool {
     let query = query.to_lowercase();
     let track_name = track.title.unwrap_or_default().to_lowercase();
     let track_artist = track.artist.unwrap_or_default().to_lowercase();

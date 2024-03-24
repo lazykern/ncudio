@@ -3,8 +3,10 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  irondash_engine_context
   media_kit_libs_linux
   screen_retriever
+  super_native_extensions
   window_manager
 )
 

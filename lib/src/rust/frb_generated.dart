@@ -95,19 +95,7 @@ abstract class RustLibApi extends BaseApi {
 
   Future<void> syncDirectory({required String mountPoint, dynamic hint});
 
-  List<TrackDTO> sortTracksByAlbum(
-      {required List<TrackDTO> tracks, dynamic hint});
-
-  List<TrackDTO> sortTracksByArtist(
-      {required List<TrackDTO> tracks, dynamic hint});
-
-  List<TrackDTO> sortTracksByDuration(
-      {required List<TrackDTO> tracks, dynamic hint});
-
-  List<TrackDTO> sortTracksByTitle(
-      {required List<TrackDTO> tracks, dynamic hint});
-
-  bool trackQueryFilter(
+  bool trackQueryFilterCondition(
       {required String query, required TrackDTO track, dynamic hint});
 }
 
@@ -479,107 +467,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  List<TrackDTO> sortTracksByAlbum(
-      {required List<TrackDTO> tracks, dynamic hint}) {
-    return handler.executeSync(SyncTask(
-      callFfi: () {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_list_track_dto(tracks, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 19)!;
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_list_track_dto,
-        decodeErrorData: null,
-      ),
-      constMeta: kSortTracksByAlbumConstMeta,
-      argValues: [tracks],
-      apiImpl: this,
-      hint: hint,
-    ));
-  }
-
-  TaskConstMeta get kSortTracksByAlbumConstMeta => const TaskConstMeta(
-        debugName: "sort_tracks_by_album",
-        argNames: ["tracks"],
-      );
-
-  @override
-  List<TrackDTO> sortTracksByArtist(
-      {required List<TrackDTO> tracks, dynamic hint}) {
-    return handler.executeSync(SyncTask(
-      callFfi: () {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_list_track_dto(tracks, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 18)!;
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_list_track_dto,
-        decodeErrorData: null,
-      ),
-      constMeta: kSortTracksByArtistConstMeta,
-      argValues: [tracks],
-      apiImpl: this,
-      hint: hint,
-    ));
-  }
-
-  TaskConstMeta get kSortTracksByArtistConstMeta => const TaskConstMeta(
-        debugName: "sort_tracks_by_artist",
-        argNames: ["tracks"],
-      );
-
-  @override
-  List<TrackDTO> sortTracksByDuration(
-      {required List<TrackDTO> tracks, dynamic hint}) {
-    return handler.executeSync(SyncTask(
-      callFfi: () {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_list_track_dto(tracks, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 20)!;
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_list_track_dto,
-        decodeErrorData: null,
-      ),
-      constMeta: kSortTracksByDurationConstMeta,
-      argValues: [tracks],
-      apiImpl: this,
-      hint: hint,
-    ));
-  }
-
-  TaskConstMeta get kSortTracksByDurationConstMeta => const TaskConstMeta(
-        debugName: "sort_tracks_by_duration",
-        argNames: ["tracks"],
-      );
-
-  @override
-  List<TrackDTO> sortTracksByTitle(
-      {required List<TrackDTO> tracks, dynamic hint}) {
-    return handler.executeSync(SyncTask(
-      callFfi: () {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_list_track_dto(tracks, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 17)!;
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_list_track_dto,
-        decodeErrorData: null,
-      ),
-      constMeta: kSortTracksByTitleConstMeta,
-      argValues: [tracks],
-      apiImpl: this,
-      hint: hint,
-    ));
-  }
-
-  TaskConstMeta get kSortTracksByTitleConstMeta => const TaskConstMeta(
-        debugName: "sort_tracks_by_title",
-        argNames: ["tracks"],
-      );
-
-  @override
-  bool trackQueryFilter(
+  bool trackQueryFilterCondition(
       {required String query, required TrackDTO track, dynamic hint}) {
     return handler.executeSync(SyncTask(
       callFfi: () {
@@ -592,15 +480,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         decodeSuccessData: sse_decode_bool,
         decodeErrorData: null,
       ),
-      constMeta: kTrackQueryFilterConstMeta,
+      constMeta: kTrackQueryFilterConditionConstMeta,
       argValues: [query, track],
       apiImpl: this,
       hint: hint,
     ));
   }
 
-  TaskConstMeta get kTrackQueryFilterConstMeta => const TaskConstMeta(
-        debugName: "track_query_filter",
+  TaskConstMeta get kTrackQueryFilterConditionConstMeta => const TaskConstMeta(
+        debugName: "track_query_filter_condition",
         argNames: ["query", "track"],
       );
 

@@ -487,8 +487,8 @@ class _MyAppState extends State<MyApp> {
                       .toList();
 
                   tracks = tracks
-                      .where((track) =>
-                          trackQueryFilter(query: searchQuery, track: track))
+                      .where((track) => trackQueryFilterCondition(
+                          query: searchQuery, track: track))
                       .toList();
 
                   if (trackSortOrder == TrackSortOrder.descending) {
