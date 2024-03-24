@@ -58,7 +58,6 @@ class _MyAppState extends State<MyApp> {
 
   String searchQuery = '';
   final player = AudioPlayer();
-  TrackDTO? currentTrack;
 
   late double lastVolume;
 
@@ -88,11 +87,7 @@ class _MyAppState extends State<MyApp> {
 
     lastVolume = player.volume;
 
-    futureTrackList = getAllTracks();
-    futureTrackIdsSortedByTitle = getAllTrackIdsSortedByTitle();
-    futureTrackIdsSortedByArtist = getAllTrackIdsSortedByArtist();
-    futureTrackIdsSortedByAlbum = getAllTrackIdsSortedByAlbum();
-    futureTrackIdsSortedByDuration = getAllTrackIdsSortedByDuration();
+    refreshTrackList();
   }
 
   @override
@@ -142,32 +137,7 @@ class _MyAppState extends State<MyApp> {
           height: 15,
           color: Theme.of(context).scaffoldBackgroundColor,
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: SliderTheme(
-            data: nakedSliderThemeData(),
-            child: StreamBuilder<Duration>(
-                stream: player.positionStream,
-                builder: (context, positionSnapshot) {
-                  return StreamBuilder<Duration?>(
-                      stream: player.durationStream,
-                      builder: (context, durationSnapshot) {
-                        var duration = durationSnapshot.data ?? Duration.zero;
-                        var position = positionSnapshot.data ?? Duration.zero;
-                        if (position > duration) {
-                          position = duration;
-                        }
-                        return Slider(
-                          min: 0,
-                          max: duration.inMilliseconds.toDouble(),
-                          value: position < Duration.zero
-                              ? 0
-                              : position.inMilliseconds.toDouble(),
-                          onChanged: (value) {
-                            player.seek(Duration(milliseconds: value.toInt()));
-                          },
-                        );
-                      });
-                }),
-          ),
+          child: progressSlider(),
         ),
         Container(
           height: 96,
@@ -176,6 +146,35 @@ class _MyAppState extends State<MyApp> {
           child: bottomBarInner(),
         ),
       ],
+    );
+  }
+
+  SliderTheme progressSlider() {
+    return SliderTheme(
+      data: nakedSliderThemeData(),
+      child: StreamBuilder<Duration>(
+          stream: player.positionStream,
+          builder: (context, positionSnapshot) {
+            return StreamBuilder<Duration?>(
+                stream: player.durationStream,
+                builder: (context, durationSnapshot) {
+                  var duration = durationSnapshot.data ?? Duration.zero;
+                  var position = positionSnapshot.data ?? Duration.zero;
+                  if (position > duration) {
+                    position = duration;
+                  }
+                  return Slider(
+                    min: 0,
+                    max: duration.inMilliseconds.toDouble(),
+                    value: position < Duration.zero
+                        ? 0
+                        : position.inMilliseconds.toDouble(),
+                    onChanged: (value) {
+                      player.seek(Duration(milliseconds: value.toInt()));
+                    },
+                  );
+                });
+          }),
     );
   }
 
@@ -250,7 +249,7 @@ class _MyAppState extends State<MyApp> {
           onPressed: () {
             deleteAllTracks().whenComplete(() => setState(() {
                   stopAndClear();
-                  futureTrackList = getAllTracks();
+                  refreshTrackList();
                 }));
           },
         ),
@@ -258,9 +257,31 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
+  void refreshTrackList() {
+    futureTrackList = getAllTracks();
+    futureTrackIdsSortedByTitle = getAllTrackIdsSortedByTitle();
+    futureTrackIdsSortedByArtist = getAllTrackIdsSortedByArtist();
+    futureTrackIdsSortedByAlbum = getAllTrackIdsSortedByAlbum();
+    futureTrackIdsSortedByDuration = getAllTrackIdsSortedByDuration();
+  }
+
   Row bottomBarInner() {
-    var lhs = currentTrack != null && player.audioSource != null
-        ? Row(
+    var lhs = StreamBuilder<SequenceState?>(
+        stream: player.sequenceStateStream,
+        builder: (context, snapshot) {
+          if (snapshot.data == null) {
+            return const Center();
+          }
+
+          var sequenceState = snapshot.data!;
+
+          if (sequenceState.currentSource == null) {
+            return const Center();
+          }
+
+          final currentTrack = sequenceState.currentSource!.tag as TrackDTO;
+
+          return Row(
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -362,14 +383,16 @@ class _MyAppState extends State<MyApp> {
                 ],
               ),
             ],
-          )
-        : Container();
+          );
+        });
     var mid = ButtonBar(
       alignment: MainAxisAlignment.center,
       children: [
         IconButton(
           icon: const Icon(Icons.skip_previous),
-          onPressed: () {},
+          onPressed: () {
+            player.seekToPrevious();
+          },
         ),
         IconButton(
           icon: StreamBuilder<bool>(
@@ -380,17 +403,13 @@ class _MyAppState extends State<MyApp> {
                     : Icons.play_arrow);
               }),
           onPressed: () {
-            setState(() {
-              togglePlayPause();
-            });
+            togglePlayPause();
           },
         ),
         IconButton(
           icon: const Icon(Icons.skip_next),
           onPressed: () {
-            setState(() {
-              player.seekToNext();
-            });
+            player.seekToNext();
           },
         ),
       ],
@@ -411,14 +430,12 @@ class _MyAppState extends State<MyApp> {
                 : Icons.volume_off);
           }),
       onPressed: () {
-        setState(() {
-          if (player.volume > 0) {
-            lastVolume = player.volume;
-            player.setVolume(0);
-          } else {
-            player.setVolume(lastVolume);
-          }
-        });
+        if (player.volume > 0) {
+          lastVolume = player.volume;
+          player.setVolume(0);
+        } else {
+          player.setVolume(lastVolume);
+        }
       },
     );
   }
@@ -431,7 +448,7 @@ class _MyAppState extends State<MyApp> {
               if (value != null) {
                 syncDirectory(mountPoint: value)
                     .whenComplete(() => setState(() {
-                          futureTrackList = getAllTracks();
+                          refreshTrackList();
                         }));
               }
             },
@@ -578,23 +595,15 @@ class _MyAppState extends State<MyApp> {
   }
 
   void setTrack(TrackDTO track) {
-    player.setFilePath(track.location);
-    currentTrack = track;
+    player
+        .setAudioSource(AudioSource.uri(Uri.file(track.location), tag: track));
   }
 
   void play() {
-    if (currentTrack == null) {
-      return;
-    }
-
     player.play();
   }
 
   void togglePlayPause() {
-    if (currentTrack == null) {
-      return;
-    }
-
     if (player.playing) {
       player.pause();
     } else {
@@ -604,7 +613,6 @@ class _MyAppState extends State<MyApp> {
 
   void stopAndClear() {
     player.stop();
-    currentTrack = null;
   }
 
   void stop() {
