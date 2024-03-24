@@ -57,12 +57,18 @@ class _MyAppState extends State<MyApp> {
   late Future<List<int>> futureTrackIdsSortedByDuration;
   late TrackSortBy trackSortBy = TrackSortBy.album;
   late TrackSortOrder trackSortOrder = TrackSortOrder.ascending;
+
   late TextEditingController searchController;
-  late Listener listener;
+
+  final FocusNode searchTextFieldFocusNode = FocusNode();
+  final FocusNode progressSliderFocusNode = FocusNode();
 
   final player = AudioPlayer();
   final ValueNotifier<ConcatenatingAudioSource> playlist =
       ValueNotifier(ConcatenatingAudioSource(children: []));
+
+  final _listController = ListController();
+  final _scrollController = ScrollController();
 
   late double lastVolume;
 
@@ -106,6 +112,10 @@ class _MyAppState extends State<MyApp> {
   void dispose() {
     player.dispose();
 
+    searchController.dispose();
+
+    searchTextFieldFocusNode.dispose();
+
     super.dispose();
   }
 
@@ -116,9 +126,35 @@ class _MyAppState extends State<MyApp> {
       themeMode: themeMode,
       theme: lightThemeData,
       darkTheme: darkThemeData,
-      home: Builder(builder: (context) {
-        return homePage(context);
-      }),
+      home: Shortcuts(
+        shortcuts: {
+          LogicalKeySet(LogicalKeyboardKey.arrowDown): const DownArrowIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowUp): const UpArrowIntent(),
+          LogicalKeySet(LogicalKeyboardKey.mediaPlayPause):
+              const PlayPauseIntent(),
+          LogicalKeySet(LogicalKeyboardKey.mediaSkip):
+              const SkipBackwardIntent(),
+          LogicalKeySet(LogicalKeyboardKey.mediaSkipBackward):
+              const SkipForwardIntent(),
+          LogicalKeySet(LogicalKeyboardKey.slash): const FocusSearchIntent(),
+          LogicalKeySet(LogicalKeyboardKey.enter): const EnterIntent(),
+          LogicalKeySet(LogicalKeyboardKey.escape): const EscapeIntent(),
+        },
+        child: Actions(
+          actions: {
+            PlayPauseIntent: PlayPauseAction(player),
+            SkipBackwardIntent: SkipBackwardAction(player),
+            SkipForwardIntent: SkipForwardAction(player),
+            FocusSearchIntent: FocusSearchAction(searchTextFieldFocusNode),
+          },
+          child: FocusScope(
+            autofocus: true,
+            child: Builder(builder: (context) {
+              return homePage(context);
+            }),
+          ),
+        ),
+      ),
     );
   }
 
@@ -180,15 +216,22 @@ class _MyAppState extends State<MyApp> {
                   if (position > duration) {
                     position = duration;
                   }
-                  return Slider(
-                    min: 0,
-                    max: duration.inMilliseconds.toDouble(),
-                    value: position < Duration.zero
-                        ? 0
-                        : position.inMilliseconds.toDouble(),
-                    onChanged: (value) {
-                      player.seek(Duration(milliseconds: value.toInt()));
+                  return Actions(
+                    actions: {
+                      PlayPauseIntent: PlayPauseAction(player),
+                      DownArrowIntent: DoNothingAction(),
                     },
+                    child: Slider(
+                      focusNode: progressSliderFocusNode,
+                      min: 0,
+                      max: duration.inMilliseconds.toDouble(),
+                      value: position < Duration.zero
+                          ? 0
+                          : position.inMilliseconds.toDouble(),
+                      onChanged: (value) {
+                        player.seek(Duration(milliseconds: value.toInt()));
+                      },
+                    ),
                   );
                 });
           }),
@@ -197,12 +240,18 @@ class _MyAppState extends State<MyApp> {
 
   AppBar appBar() {
     return AppBar(
-      flexibleSpace: TextField(
-        controller: searchController,
-        decoration: const InputDecoration(
-          hintText: 'Search',
-          prefixIcon: Icon(Icons.search),
-          border: InputBorder.none,
+      flexibleSpace: Actions(
+        actions: {
+          FocusSearchIntent: DoNothingAction(),
+        },
+        child: TextField(
+          focusNode: searchTextFieldFocusNode,
+          controller: searchController,
+          decoration: const InputDecoration(
+            hintText: 'Search',
+            prefixIcon: Icon(Icons.search),
+            border: InputBorder.none,
+          ),
         ),
       ),
       actions: [
@@ -617,9 +666,13 @@ class _MyAppState extends State<MyApp> {
                       valueListenable: searchController,
                       builder: (context, _, __) {
                         return SuperListView.builder(
+                          listController: _listController,
+                          controller: _scrollController,
                           itemCount: tracks.length,
                           itemBuilder: (BuildContext context, int index) {
-                            return trackListTile(tracks[index]);
+                            return trackListTile(
+                              tracks[index],
+                            );
                           },
                         );
                       });
@@ -634,7 +687,7 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
-  Widget trackListTile(TrackDTO track) {
+  Widget trackListTile(TrackDTO track, {FocusNode? focusNode}) {
     return ContextMenuWidget(
       menuProvider: (MenuRequest request) {
         return Menu(children: () {
@@ -649,7 +702,7 @@ class _MyAppState extends State<MyApp> {
             MenuAction(
                 title: "Add to Queue",
                 callback: () {
-                  addTrack(track);
+                  AddToQueueAction(track, player, playlist.value).invoke(null);
                 },
                 image: MenuImage.icon(Icons.queue)),
           ];
@@ -659,7 +712,8 @@ class _MyAppState extends State<MyApp> {
                 title: "Add Album to Queue",
                 callback: () {
                   findTrackByAlbum(albumId: track.album!.id).then((tracks) {
-                    addTracks(tracks);
+                    AddManyToQueueAction(tracks, player, playlist.value)
+                        .invoke(null);
                   });
                 },
                 image: MenuImage.icon(Icons.queue_music)));
@@ -694,6 +748,7 @@ class _MyAppState extends State<MyApp> {
         }());
       },
       child: ListTile(
+        focusNode: focusNode,
         dense: true,
         leading: AspectRatio(
           aspectRatio: 1,
@@ -742,7 +797,7 @@ class _MyAppState extends State<MyApp> {
         ),
         onTap: () {
           if (HardwareKeyboard.instance.isShiftPressed) {
-            addTrack(track);
+            AddToQueueAction(track, player, playlist.value).invoke(null);
           } else {
             setTrack(track);
             play();
@@ -768,54 +823,15 @@ class _MyAppState extends State<MyApp> {
         initialIndex: playlist.value.length - 1);
   }
 
-  void addTrack(TrackDTO track) {
-    playlist.value.add(AudioSource.uri(Uri.file(track.location), tag: track));
+  // void addTrackNext(TrackDTO track) {
+  //   final source = AudioSource.uri(Uri.file(track.location), tag: track);
+  //   if (player.currentIndex == null) {
+  //     playlist.value.add(source);
+  //     return;
+  //   }
 
-    if (player.sequenceState?.currentSource == null) {
-      player.setAudioSource(playlist.value,
-          initialIndex: playlist.value.length - 1);
-      return;
-    }
-
-    if (player.currentIndex != null &&
-        !player.playing &&
-        player.duration != null &&
-        player.position.inSeconds == player.duration!.inSeconds) {
-      player.setAudioSource(playlist.value,
-          initialIndex: player.currentIndex! + 1);
-      return;
-    }
-  }
-
-  void addTracks(List<TrackDTO> tracks) {
-    for (var track in tracks) {
-      playlist.value.add(AudioSource.uri(Uri.file(track.location), tag: track));
-    }
-
-    if (player.currentIndex != null &&
-        player.sequenceState?.currentSource == null) {
-      player.setAudioSource(playlist.value, initialIndex: player.currentIndex!);
-      return;
-    }
-    if (player.currentIndex != null &&
-        !player.playing &&
-        player.duration != null &&
-        player.position.inSeconds == player.duration!.inSeconds) {
-      player.setAudioSource(playlist.value,
-          initialIndex: player.currentIndex! + 1);
-      return;
-    }
-  }
-
-  void addTrackNext(TrackDTO track) {
-    final source = AudioSource.uri(Uri.file(track.location), tag: track);
-    if (player.currentIndex == null) {
-      playlist.value.add(source);
-      return;
-    }
-
-    playlist.value.insert(player.currentIndex! + 1, source);
-  }
+  //   playlist.value.insert(player.currentIndex! + 1, source);
+  // }
 
   void play() {
     player.play();
@@ -847,5 +863,196 @@ class _MyAppState extends State<MyApp> {
     print('Duration: ${player.duration}');
     print('CurrentIndex: ${player.currentIndex}');
     print('Sequence: ${player.sequence}');
+  }
+}
+
+class PlayPauseIntent extends Intent {
+  const PlayPauseIntent();
+}
+
+class PlayPauseAction extends Action<PlayPauseIntent> {
+  final AudioPlayer player;
+
+  PlayPauseAction(this.player);
+
+  @override
+  Object? invoke(PlayPauseIntent intent) {
+    if (player.playing) {
+      player.pause();
+    } else {
+      player.play();
+    }
+    return null;
+  }
+}
+
+class PlaybackIntent extends Intent {
+  const PlaybackIntent();
+}
+
+class SkipBackwardIntent extends Intent {
+  const SkipBackwardIntent();
+}
+
+class SkipBackwardAction extends Action<SkipBackwardIntent> {
+  final AudioPlayer player;
+
+  SkipBackwardAction(this.player);
+
+  @override
+  Object? invoke(SkipBackwardIntent intent) {
+    player.seekToPrevious();
+    return null;
+  }
+}
+
+class SkipForwardIntent extends Intent {
+  const SkipForwardIntent();
+}
+
+class SkipForwardAction extends Action<SkipForwardIntent> {
+  final AudioPlayer player;
+
+  SkipForwardAction(this.player);
+
+  @override
+  Object? invoke(SkipForwardIntent intent) {
+    player.seekToNext();
+    return null;
+  }
+}
+
+class LoggingShortcutManager extends ShortcutManager {
+  @override
+  KeyEventResult handleKeypress(BuildContext context, KeyEvent event) {
+    final KeyEventResult result = super.handleKeypress(context, event);
+    if (result == KeyEventResult.handled) {
+      print('Handled shortcut $event in $context');
+    }
+    return result;
+  }
+}
+
+/// An ActionDispatcher that logs all the actions that it invokes.
+class LoggingActionDispatcher extends ActionDispatcher {
+  @override
+  Object? invokeAction(
+    covariant Action<Intent> action,
+    covariant Intent intent, [
+    BuildContext? context,
+  ]) {
+    print('Action invoked: $action($intent) from $context');
+    super.invokeAction(action, intent, context);
+
+    return null;
+  }
+}
+
+class FocusSearchIntent extends Intent {
+  const FocusSearchIntent();
+}
+
+class FocusSearchAction extends Action<FocusSearchIntent> {
+  final FocusNode focusNode;
+
+  FocusSearchAction(this.focusNode);
+
+  @override
+  Object? invoke(FocusSearchIntent intent) {
+    focusNode.requestFocus();
+    return null;
+  }
+}
+
+class EnterIntent extends Intent {
+  const EnterIntent();
+}
+
+class EscapeIntent extends Intent {
+  const EscapeIntent();
+}
+
+class UpArrowIntent extends Intent {
+  const UpArrowIntent();
+}
+
+class DownArrowIntent extends Intent {
+  const DownArrowIntent();
+}
+
+class FocusOrNullAction extends Action<Intent> {
+  final FocusNode? focusNode;
+
+  FocusOrNullAction(this.focusNode);
+
+  @override
+  Object? invoke(Intent intent) {
+    if (focusNode == null) {
+      return null;
+    }
+
+    focusNode!.requestFocus();
+    return null;
+  }
+}
+
+class DoNothingAction extends Action<Intent> {
+  @override
+  Object? invoke(Intent intent) {
+    return null;
+  }
+}
+
+class AddToQueueAction extends Action<Intent> {
+  final TrackDTO track;
+  final AudioPlayer player;
+  final ConcatenatingAudioSource playlist;
+
+  AddToQueueAction(this.track, this.player, this.playlist);
+
+  @override
+  Object? invoke(Intent? intent) {
+    playlist.add(AudioSource.uri(Uri.file(track.location), tag: track));
+
+    if (player.sequenceState?.currentSource == null) {
+      player.setAudioSource(playlist, initialIndex: playlist.length - 1);
+      return null;
+    }
+
+    if (player.currentIndex != null &&
+        !player.playing &&
+        player.duration != null &&
+        player.position.inSeconds == player.duration!.inSeconds) {
+      player.setAudioSource(playlist, initialIndex: player.currentIndex! + 1);
+    }
+    return null;
+  }
+}
+
+class AddManyToQueueAction extends Action<Intent> {
+  final List<TrackDTO> tracks;
+  final AudioPlayer player;
+  final ConcatenatingAudioSource playlist;
+
+  AddManyToQueueAction(this.tracks, this.player, this.playlist);
+
+  @override
+  Object? invoke(Intent? intent) {
+    for (var track in tracks) {
+      playlist.add(AudioSource.uri(Uri.file(track.location), tag: track));
+    }
+
+    if (player.sequenceState?.currentSource == null) {
+      player.setAudioSource(playlist, initialIndex: playlist.length - 1);
+      return null;
+    }
+
+    if (player.currentIndex != null &&
+        !player.playing &&
+        player.duration != null &&
+        player.position.inSeconds == player.duration!.inSeconds) {
+      player.setAudioSource(playlist, initialIndex: player.currentIndex! + 1);
+    }
+    return null;
   }
 }
