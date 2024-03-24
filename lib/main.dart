@@ -139,7 +139,7 @@ class _MyAppState extends State<MyApp> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          height: 20,
+          height: 15,
           color: Theme.of(context).scaffoldBackgroundColor,
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: SliderTheme(
@@ -265,7 +265,7 @@ class _MyAppState extends State<MyApp> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.all(Radius.circular(4)),
+                borderRadius: const BorderRadius.all(Radius.circular(4)),
                 child: currentTrack?.pictureId != null
                     ? Image.file(
                         File(
@@ -281,7 +281,7 @@ class _MyAppState extends State<MyApp> {
                         ),
                       ),
               ),
-              SizedBox(
+              const SizedBox(
                 width: 8,
               ),
               Flexible(
@@ -291,7 +291,7 @@ class _MyAppState extends State<MyApp> {
                     children: [
                       SelectableText(currentTrack?.title ?? '',
                           maxLines: 1,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             overflow: TextOverflow.fade,
                           )),
@@ -345,7 +345,7 @@ class _MyAppState extends State<MyApp> {
                     height: 24,
                     child: IconButton(
                       icon: const Icon(Icons.favorite_border),
-                      padding: EdgeInsets.all(0.0),
+                      padding: const EdgeInsets.all(0.0),
                       iconSize: 16,
                       onPressed: () {},
                     ),
@@ -354,7 +354,7 @@ class _MyAppState extends State<MyApp> {
                     height: 24,
                     child: IconButton(
                       icon: const Icon(Icons.more_vert),
-                      padding: EdgeInsets.all(0.0),
+                      padding: const EdgeInsets.all(0.0),
                       iconSize: 16,
                       onPressed: () {},
                     ),
