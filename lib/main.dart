@@ -727,7 +727,16 @@ class _MyAppState extends State<MyApp> {
         title: Text(
           track.title ?? 'Unknown Track',
         ),
-        subtitle: Text(track.artist?.name ?? 'Unknown Artist'),
+        subtitle: () {
+          if (track.artist != null && track.album != null) {
+            return Text('${track.artist!.name} - ${track.album!.name}');
+          } else if (track.artist != null) {
+            return Text(track.artist!.name);
+          } else if (track.album != null) {
+            return Text(track.album!.name);
+          }
+          return const Text('');
+        }(),
         trailing: Text(
           durationToString(duration: Duration(milliseconds: track.durationMs)),
         ),
