@@ -55,10 +55,10 @@ class _MyAppState extends State<MyApp> {
   late Future<List<int>> futureTrackIdsSortedByArtist;
   late Future<List<int>> futureTrackIdsSortedByAlbum;
   late Future<List<int>> futureTrackIdsSortedByDuration;
-  late TrackSortBy trackSortBy = TrackSortBy.title;
+  late TrackSortBy trackSortBy = TrackSortBy.album;
   late TrackSortOrder trackSortOrder = TrackSortOrder.ascending;
-
-  String searchQuery = '';
+  late TextEditingController searchController;
+  late Listener listener;
 
   final player = AudioPlayer();
   final ValueNotifier<ConcatenatingAudioSource> playlist =
@@ -89,6 +89,11 @@ class _MyAppState extends State<MyApp> {
 
     initializeApp();
     initializeDb();
+
+    searchController = TextEditingController();
+    searchController.addListener(() {
+      setState(() {});
+    });
 
     lastVolume = player.volume;
 
@@ -193,16 +198,12 @@ class _MyAppState extends State<MyApp> {
   AppBar appBar() {
     return AppBar(
       flexibleSpace: TextField(
+        controller: searchController,
         decoration: const InputDecoration(
           hintText: 'Search',
           prefixIcon: Icon(Icons.search),
           border: InputBorder.none,
         ),
-        onChanged: (value) {
-          setState(() {
-            searchQuery = value.toLowerCase();
-          });
-        },
       ),
       actions: [
         IconButton(
@@ -485,7 +486,9 @@ class _MyAppState extends State<MyApp> {
         IconButton(
           icon: const Icon(Icons.skip_next),
           onPressed: () {
-            player.seekToNext();
+            player.seekToNext().then((value) {
+              printPlayerInfo();
+            });
           },
         ),
       ],
@@ -599,7 +602,7 @@ class _MyAppState extends State<MyApp> {
 
                   tracks = tracks
                       .where((track) => trackQueryFilterCondition(
-                          query: searchQuery, track: track))
+                          query: searchController.text, track: track))
                       .toList();
 
                   if (trackSortOrder == TrackSortOrder.descending) {
@@ -610,12 +613,16 @@ class _MyAppState extends State<MyApp> {
                     return const Center(child: Text('No tracks found'));
                   }
 
-                  return SuperListView.builder(
-                    itemCount: tracks.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      return trackListTile(tracks[index]);
-                    },
-                  );
+                  return ValueListenableBuilder(
+                      valueListenable: searchController,
+                      builder: (context, _, __) {
+                        return SuperListView.builder(
+                          itemCount: tracks.length,
+                          itemBuilder: (BuildContext context, int index) {
+                            return trackListTile(tracks[index]);
+                          },
+                        );
+                      });
                 } else {
                   return const Center();
                 }
@@ -630,29 +637,61 @@ class _MyAppState extends State<MyApp> {
   Widget trackListTile(TrackDTO track) {
     return ContextMenuWidget(
       menuProvider: (MenuRequest request) {
-        return Menu(children: [
-          MenuAction(
-              callback: () {
-                setTrack(track);
-                play();
-              },
-              title: "Play",
-              image: MenuImage.icon(Icons.play_arrow)),
-          MenuAction(
-              title: "Add to Queue",
-              callback: () {
-                addTrack(track);
-              },
-              image: MenuImage.icon(Icons.queue)),
-          MenuAction(
-              title: "Add Album to Queue",
-              callback: () {
-                findTrackByAlbum(albumId: track.album!.id).then((tracks) {
-                  addTracks(tracks);
-                });
-              },
-              image: MenuImage.icon(Icons.queue_music)),
-        ]);
+        return Menu(children: () {
+          var actions = <MenuElement>[
+            MenuAction(
+                callback: () {
+                  setTrack(track);
+                  play();
+                },
+                title: "Play",
+                image: MenuImage.icon(Icons.play_arrow)),
+            MenuAction(
+                title: "Add to Queue",
+                callback: () {
+                  addTrack(track);
+                },
+                image: MenuImage.icon(Icons.queue)),
+          ];
+
+          if (track.album != null) {
+            actions.add(MenuAction(
+                title: "Add Album to Queue",
+                callback: () {
+                  findTrackByAlbum(albumId: track.album!.id).then((tracks) {
+                    addTracks(tracks);
+                  });
+                },
+                image: MenuImage.icon(Icons.queue_music)));
+          }
+
+          if (track.album != null || track.artist != null) {
+            var searchMenu = Menu(
+              children: [],
+              title: "Search",
+            );
+            if (track.album != null) {
+              searchMenu.children.add(MenuAction(
+                title: track.album!.name,
+                callback: () {
+                  searchController.text = track.album!.name;
+                },
+                image: MenuImage.icon(Icons.album),
+              ));
+            }
+            if (track.artist != null) {
+              searchMenu.children.add(MenuAction(
+                title: track.artist!.name,
+                callback: () {
+                  searchController.text = track.artist!.name;
+                },
+                image: MenuImage.icon(Icons.people),
+              ));
+            }
+            actions.add(searchMenu);
+          }
+          return actions;
+        }());
       },
       child: ListTile(
         dense: true,
@@ -787,5 +826,17 @@ class _MyAppState extends State<MyApp> {
 
   void stop() {
     player.stop();
+  }
+
+  void printPlayerInfo() {
+    print('Player Info:');
+    print('Playing: ${player.playing}');
+    print('LoopMode: ${player.loopMode}');
+    print('ShuffleMode: ${player.shuffleModeEnabled}');
+    print('Volume: ${player.volume}');
+    print('Position: ${player.position}');
+    print('Duration: ${player.duration}');
+    print('CurrentIndex: ${player.currentIndex}');
+    print('Sequence: ${player.sequence}');
   }
 }
