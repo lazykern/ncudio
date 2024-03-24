@@ -409,6 +409,51 @@ class _MyAppState extends State<MyApp> {
     var mid = ButtonBar(
       alignment: MainAxisAlignment.center,
       children: [
+        StreamBuilder<LoopMode>(
+            stream: player.loopModeStream,
+            builder: (context, snapshot) {
+              return IconButton(
+                icon: Icon(
+                  snapshot.data == LoopMode.off
+                      ? Icons.repeat
+                      : snapshot.data == LoopMode.one
+                          ? Icons.repeat_one
+                          : Icons.repeat,
+                  color: snapshot.data == LoopMode.off
+                      ? Theme.of(context).iconTheme.color?.withOpacity(0.3)
+                      : Theme.of(context).iconTheme.color,
+                ),
+                onPressed: () {
+                  if (snapshot.data == null) {
+                    return;
+                  }
+
+                  player.setLoopMode(snapshot.data == LoopMode.off
+                      ? LoopMode.all
+                      : snapshot.data == LoopMode.all
+                          ? LoopMode.one
+                          : LoopMode.off);
+                },
+              );
+            }),
+        StreamBuilder<bool>(
+            stream: player.shuffleModeEnabledStream,
+            builder: (context, snapshot) {
+              return IconButton(
+                icon: Icon(
+                  snapshot.data != null && snapshot.data!
+                      ? Icons.shuffle
+                      : Icons.shuffle_outlined,
+                  color: snapshot.data != null && snapshot.data!
+                      ? Theme.of(context).iconTheme.color
+                      : Theme.of(context).iconTheme.color?.withOpacity(0.3),
+                ),
+                onPressed: () {
+                  player.setShuffleModeEnabled(
+                      snapshot.data != null ? !snapshot.data! : true);
+                },
+              );
+            }),
         IconButton(
           icon: const Icon(Icons.skip_previous),
           onPressed: () {
