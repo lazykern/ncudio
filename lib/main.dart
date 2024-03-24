@@ -679,10 +679,9 @@ class _MyAppState extends State<MyApp> {
 
   void setTrack(TrackDTO track) {
     final source = AudioSource.uri(Uri.file(track.location), tag: track);
-    player.stop();
-    playlist.value.clear();
     playlist.value.add(source);
-    player.setAudioSource(playlist.value, initialIndex: 0);
+    player.setAudioSource(playlist.value,
+        initialIndex: playlist.value.length - 1);
   }
 
   void addTrack(TrackDTO track) {
