@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_media_kit/just_audio_media_kit.dart';
 import 'package:ncudio/src/rust/api/simple.dart';
@@ -409,51 +410,51 @@ class _MyAppState extends State<MyApp> {
     var mid = ButtonBar(
       alignment: MainAxisAlignment.center,
       children: [
-        StreamBuilder<LoopMode>(
-            stream: player.loopModeStream,
-            builder: (context, snapshot) {
-              return IconButton(
-                icon: Icon(
-                  snapshot.data == LoopMode.off
-                      ? Icons.repeat
-                      : snapshot.data == LoopMode.one
-                          ? Icons.repeat_one
-                          : Icons.repeat,
-                  color: snapshot.data == LoopMode.off
-                      ? Theme.of(context).iconTheme.color?.withOpacity(0.3)
-                      : Theme.of(context).iconTheme.color,
-                ),
-                onPressed: () {
-                  if (snapshot.data == null) {
-                    return;
-                  }
+        // StreamBuilder<LoopMode>(
+        //     stream: player.loopModeStream,
+        //     builder: (context, snapshot) {
+        //       return IconButton(
+        //         icon: Icon(
+        //           snapshot.data == LoopMode.off
+        //               ? Icons.repeat
+        //               : snapshot.data == LoopMode.one
+        //                   ? Icons.repeat_one
+        //                   : Icons.repeat,
+        //           color: snapshot.data == LoopMode.off
+        //               ? Theme.of(context).iconTheme.color?.withOpacity(0.3)
+        //               : Theme.of(context).iconTheme.color,
+        //         ),
+        //         onPressed: () {
+        //           if (snapshot.data == null) {
+        //             return;
+        //           }
 
-                  player.setLoopMode(snapshot.data == LoopMode.off
-                      ? LoopMode.all
-                      : snapshot.data == LoopMode.all
-                          ? LoopMode.one
-                          : LoopMode.off);
-                },
-              );
-            }),
-        StreamBuilder<bool>(
-            stream: player.shuffleModeEnabledStream,
-            builder: (context, snapshot) {
-              return IconButton(
-                icon: Icon(
-                  snapshot.data != null && snapshot.data!
-                      ? Icons.shuffle
-                      : Icons.shuffle_outlined,
-                  color: snapshot.data != null && snapshot.data!
-                      ? Theme.of(context).iconTheme.color
-                      : Theme.of(context).iconTheme.color?.withOpacity(0.3),
-                ),
-                onPressed: () {
-                  player.setShuffleModeEnabled(
-                      snapshot.data != null ? !snapshot.data! : true);
-                },
-              );
-            }),
+        //           player.setLoopMode(snapshot.data == LoopMode.off
+        //               ? LoopMode.all
+        //               : snapshot.data == LoopMode.all
+        //                   ? LoopMode.one
+        //                   : LoopMode.off);
+        //         },
+        //       );
+        //     }),
+        // StreamBuilder<bool>(
+        //     stream: player.shuffleModeEnabledStream,
+        //     builder: (context, snapshot) {
+        //       return IconButton(
+        //         icon: Icon(
+        //           snapshot.data != null && snapshot.data!
+        //               ? Icons.shuffle
+        //               : Icons.shuffle_outlined,
+        //           color: snapshot.data != null && snapshot.data!
+        //               ? Theme.of(context).iconTheme.color
+        //               : Theme.of(context).iconTheme.color?.withOpacity(0.3),
+        //         ),
+        //         onPressed: () {
+        //           player.setShuffleModeEnabled(
+        //               snapshot.data != null ? !snapshot.data! : true);
+        //         },
+        //       );
+        //     }),
         IconButton(
           icon: const Icon(Icons.skip_previous),
           onPressed: () {
@@ -657,10 +658,12 @@ class _MyAppState extends State<MyApp> {
         durationToString(duration: Duration(milliseconds: track.durationMs)),
       ),
       onTap: () {
-        setState(() {
+        if (HardwareKeyboard.instance.isShiftPressed) {
+          addTrack(track);
+        } else {
           setTrack(track);
           play();
-        });
+        }
       },
     );
   }
@@ -676,9 +679,15 @@ class _MyAppState extends State<MyApp> {
 
   void setTrack(TrackDTO track) {
     final source = AudioSource.uri(Uri.file(track.location), tag: track);
+    player.stop();
     playlist.value.clear();
     playlist.value.add(source);
     player.setAudioSource(playlist.value, initialIndex: 0);
+  }
+
+  void addTrack(TrackDTO track) {
+    final source = AudioSource.uri(Uri.file(track.location), tag: track);
+    playlist.value.add(source);
   }
 
   void play() {
