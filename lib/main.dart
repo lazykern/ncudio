@@ -57,7 +57,10 @@ class _MyAppState extends State<MyApp> {
   late TrackSortOrder trackSortOrder = TrackSortOrder.ascending;
 
   String searchQuery = '';
+
   final player = AudioPlayer();
+  final ValueNotifier<ConcatenatingAudioSource> playlist =
+      ValueNotifier(ConcatenatingAudioSource(children: []));
 
   late double lastVolume;
 
@@ -287,20 +290,38 @@ class _MyAppState extends State<MyApp> {
             children: [
               ClipRRect(
                 borderRadius: const BorderRadius.all(Radius.circular(4)),
-                child: currentTrack?.pictureId != null
-                    ? Image.file(
-                        File(
-                            "${getCachePath()}/${currentTrack!.pictureId!}.jpg"),
-                        cacheHeight: 200,
-                        filterQuality: FilterQuality.medium,
-                        fit: BoxFit.cover)
-                    : AspectRatio(
-                        aspectRatio: 1,
-                        child: Container(
+                child: AspectRatio(
+                  aspectRatio: 1,
+                  child: currentTrack.pictureId != null
+                      ? Image(
+                          image: FileImage(File(
+                              "${getCachePath()}/${currentTrack.pictureId!}.jpg")),
+                          filterQuality: FilterQuality.medium,
+                          fit: BoxFit.cover,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) {
+                              return child;
+                            }
+                            return const SizedBox();
+                          },
+                          frameBuilder:
+                              (context, child, frame, wasSynchronouslyLoaded) {
+                            if (wasSynchronouslyLoaded) {
+                              return child;
+                            }
+                            return AnimatedOpacity(
+                              opacity: frame == null ? 0 : 1,
+                              duration: const Duration(milliseconds: 500),
+                              curve: Curves.easeOut,
+                              child: child,
+                            );
+                          },
+                        )
+                      : Container(
                           color: Colors.grey,
                           child: const Icon(Icons.music_note),
                         ),
-                      ),
+                ),
               ),
               const SizedBox(
                 width: 8,
@@ -559,10 +580,24 @@ class _MyAppState extends State<MyApp> {
         child: ClipRRect(
           borderRadius: const BorderRadius.all(Radius.circular(4)),
           child: track.pictureId != null
-              ? Image.file(File("${getCachePath()}/${track.pictureId!}.jpg"),
+              ? Image.file(
+                  File("${getCachePath()}/${track.pictureId!}.jpg"),
                   filterQuality: FilterQuality.medium,
                   cacheHeight: 48,
-                  fit: BoxFit.cover)
+                  fit: BoxFit.cover,
+                  frameBuilder:
+                      (context, child, frame, wasSynchronouslyLoaded) {
+                    if (wasSynchronouslyLoaded) {
+                      return child;
+                    }
+                    return AnimatedOpacity(
+                      opacity: frame == null ? 0 : 1,
+                      duration: const Duration(milliseconds: 1000),
+                      curve: Curves.easeOut,
+                      child: child,
+                    );
+                  },
+                )
               : Container(
                   color: Colors.grey,
                   child: const Icon(Icons.music_note),
@@ -595,8 +630,10 @@ class _MyAppState extends State<MyApp> {
   }
 
   void setTrack(TrackDTO track) {
-    player
-        .setAudioSource(AudioSource.uri(Uri.file(track.location), tag: track));
+    final source = AudioSource.uri(Uri.file(track.location), tag: track);
+    playlist.value.clear();
+    playlist.value.add(source);
+    player.setAudioSource(playlist.value, initialIndex: 0);
   }
 
   void play() {
