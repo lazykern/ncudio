@@ -156,17 +156,24 @@ class _MyAppState extends State<MyApp> {
   SliderTheme progressSlider() {
     return SliderTheme(
       data: nakedSliderThemeData(),
-      child: StreamBuilder<Duration>(
-          stream: player.positionStream,
-          builder: (context, positionSnapshot) {
-            return StreamBuilder<Duration?>(
-                stream: player.durationStream,
-                builder: (context, durationSnapshot) {
-                  var duration = durationSnapshot.data ?? Duration.zero;
+      child: StreamBuilder<Duration?>(
+          stream: player.durationStream,
+          builder: (context, durationSnapshot) {
+            var duration = durationSnapshot.data ?? Duration.zero;
+            return StreamBuilder<Duration>(
+                stream: player.positionStream,
+                builder: (context, positionSnapshot) {
                   var position = positionSnapshot.data ?? Duration.zero;
+
+                  if (position < Duration.zero) {
+                    position = Duration.zero;
+                  }
+
                   if (position > duration) {
                     position = duration;
                   }
+                  print('duration: $duration');
+                  print('position: $position');
                   return Slider(
                     min: 0,
                     max: duration.inMilliseconds.toDouble(),
