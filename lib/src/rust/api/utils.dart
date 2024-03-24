@@ -11,3 +11,6 @@ bool trackQueryFilterCondition(
         {required String query, required TrackDTO track, dynamic hint}) =>
     RustLib.instance.api
         .trackQueryFilterCondition(query: query, track: track, hint: hint);
+
+String durationToString({required Duration duration, dynamic hint}) =>
+    RustLib.instance.api.durationToString(duration: duration, hint: hint);

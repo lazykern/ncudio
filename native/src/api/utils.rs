@@ -1,3 +1,5 @@
+use chrono::Duration;
+
 use super::simple::TrackDTO;
 
 #[flutter_rust_bridge::frb(sync)]
@@ -18,4 +20,17 @@ pub fn track_query_filter_condition(query: String, track: TrackDTO) -> bool {
     }
 
     false
+}
+
+#[flutter_rust_bridge::frb(sync)]
+pub fn duration_to_string(duration: Duration) -> String {
+    let hours = duration.num_hours();
+    let minutes = duration.num_minutes() % 60;
+    let seconds = duration.num_seconds() % 60;
+
+    if hours > 0 {
+        format!("{:02}:{:02}:{:02}", hours, minutes, seconds)
+    } else {
+        format!("{:02}:{:02}", minutes, seconds)
+    }
 }
