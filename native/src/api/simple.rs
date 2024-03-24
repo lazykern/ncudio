@@ -81,6 +81,8 @@ struct ParsedTrack {
     title: Option<String>,
     artist: Option<String>,
     album: Option<String>,
+    number: Option<i32>,
+    disc: Option<i32>,
     duration_ms: i32,
     location: String,
     mount_point: String,
@@ -112,6 +114,8 @@ fn parse_music_file<P: AsRef<std::path::Path>>(path: P, mount_point: &P) -> Opti
     let mut parsed_track = ParsedTrack {
         picture_id: None,
         title: None,
+        number: None,
+        disc: None,
         artist: None,
         album: None,
         location,
@@ -130,6 +134,8 @@ fn parse_music_file<P: AsRef<std::path::Path>>(path: P, mount_point: &P) -> Opti
     parsed_track.title = tag.title().map(|s| s.to_string());
     parsed_track.artist = tag.artist().map(|s| s.to_string());
     parsed_track.album = tag.album().map(|s| s.to_string());
+    parsed_track.number = tag.track().map(|n| n as i32);
+    parsed_track.disc = tag.disk().map(|n| n as i32);
 
     if let Some(picture) = tag.pictures().first() {
         let picture_id_digest = md5::compute(picture.data());
@@ -227,6 +233,8 @@ pub fn sync_directory(mount_point: String) {
             picture_id: parsed_tracks.picture_id,
             album_id: album.as_ref().map(|a| a.id),
             artist_id: artist.as_ref().map(|a| a.id),
+            number: parsed_tracks.number,
+            disc: parsed_tracks.disc,
             title: parsed_tracks.title,
             duration_ms: parsed_tracks.duration_ms,
             location: parsed_tracks.location,
@@ -250,6 +258,8 @@ pub struct TrackDTO {
     pub title: Option<String>,
     pub artist: Option<String>,
     pub album: Option<String>,
+    pub number: Option<i32>,
+    pub disc: Option<i32>,
     pub duration_ms: i32,
     pub location: String,
     pub mount_point: String,
@@ -273,7 +283,7 @@ pub fn get_all_track_ids_sorted_by_title() -> Vec<i32> {
 
     track_dsl::track
         .select(track_dsl::id)
-        .order_by(track_dsl::title)
+        .order_by((track_dsl::title, track_dsl::album_id, track_dsl::number))
         .load(conn)
         .unwrap()
 }
@@ -289,7 +299,7 @@ pub fn get_all_track_ids_sorted_by_artist() -> Vec<i32> {
         .left_join(
             schema::artist::table.on(schema::track::artist_id.eq(schema::artist::id.nullable())),
         )
-        .order_by(schema::artist::name)
+        .order_by((schema::artist::name, schema::track::album_id, schema::track::number))
         .load(conn)
         .unwrap()
 }
@@ -305,7 +315,7 @@ pub fn get_all_track_ids_sorted_by_album() -> Vec<i32> {
         .left_join(
             schema::album::table.on(schema::track::album_id.eq(schema::album::id.nullable())),
         )
-        .order_by(schema::album::name)
+        .order_by((schema::album::name, schema::track::artist_id, schema::track::number))
         .load(conn)
         .unwrap()
 }
@@ -317,7 +327,7 @@ pub fn get_all_track_ids_sorted_by_duration() -> Vec<i32> {
 
     track_dsl::track
         .select(track_dsl::id)
-        .order_by(track_dsl::duration_ms)
+        .order_by((track_dsl::duration_ms, track_dsl::title))
         .load(conn)
         .unwrap()
 }
@@ -348,6 +358,8 @@ fn populate_track(conn: &mut SqliteConnection, track: Track) -> TrackDTO {
             title: track.title,
             artist: artist.map(|a| a.name),
             album: album.map(|a| a.name),
+            number: track.number,
+            disc: track.disc,
             duration_ms: track.duration_ms,
             location: track.location,
             mount_point: track.mount_point,

@@ -54,6 +54,8 @@ class TrackDTO {
   final String? title;
   final String? artist;
   final String? album;
+  final int? number;
+  final int? disc;
   final int durationMs;
   final String location;
   final String mountPoint;
@@ -64,6 +66,8 @@ class TrackDTO {
     this.title,
     this.artist,
     this.album,
+    this.number,
+    this.disc,
     required this.durationMs,
     required this.location,
     required this.mountPoint,
@@ -76,6 +80,8 @@ class TrackDTO {
       title.hashCode ^
       artist.hashCode ^
       album.hashCode ^
+      number.hashCode ^
+      disc.hashCode ^
       durationMs.hashCode ^
       location.hashCode ^
       mountPoint.hashCode ^
@@ -90,6 +96,8 @@ class TrackDTO {
           title == other.title &&
           artist == other.artist &&
           album == other.album &&
+          number == other.number &&
+          disc == other.disc &&
           durationMs == other.durationMs &&
           location == other.location &&
           mountPoint == other.mountPoint &&

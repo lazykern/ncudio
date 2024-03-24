@@ -634,6 +634,17 @@ impl SseDecode for Option<String> {
     }
 }
 
+impl SseDecode for Option<i32> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(<i32>::sse_decode(deserializer));
+        } else {
+            return None;
+        }
+    }
+}
+
 impl SseDecode for crate::api::simple::TrackDTO {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -641,6 +652,8 @@ impl SseDecode for crate::api::simple::TrackDTO {
         let mut var_title = <Option<String>>::sse_decode(deserializer);
         let mut var_artist = <Option<String>>::sse_decode(deserializer);
         let mut var_album = <Option<String>>::sse_decode(deserializer);
+        let mut var_number = <Option<i32>>::sse_decode(deserializer);
+        let mut var_disc = <Option<i32>>::sse_decode(deserializer);
         let mut var_durationMs = <i32>::sse_decode(deserializer);
         let mut var_location = <String>::sse_decode(deserializer);
         let mut var_mountPoint = <String>::sse_decode(deserializer);
@@ -650,6 +663,8 @@ impl SseDecode for crate::api::simple::TrackDTO {
             title: var_title,
             artist: var_artist,
             album: var_album,
+            number: var_number,
+            disc: var_disc,
             duration_ms: var_durationMs,
             location: var_location,
             mount_point: var_mountPoint,
@@ -722,6 +737,8 @@ impl flutter_rust_bridge::IntoDart for crate::api::simple::TrackDTO {
             self.title.into_into_dart().into_dart(),
             self.artist.into_into_dart().into_dart(),
             self.album.into_into_dart().into_dart(),
+            self.number.into_into_dart().into_dart(),
+            self.disc.into_into_dart().into_dart(),
             self.duration_ms.into_into_dart().into_dart(),
             self.location.into_into_dart().into_dart(),
             self.mount_point.into_into_dart().into_dart(),
@@ -818,6 +835,16 @@ impl SseEncode for Option<String> {
     }
 }
 
+impl SseEncode for Option<i32> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <i32>::sse_encode(value, serializer);
+        }
+    }
+}
+
 impl SseEncode for crate::api::simple::TrackDTO {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -825,6 +852,8 @@ impl SseEncode for crate::api::simple::TrackDTO {
         <Option<String>>::sse_encode(self.title, serializer);
         <Option<String>>::sse_encode(self.artist, serializer);
         <Option<String>>::sse_encode(self.album, serializer);
+        <Option<i32>>::sse_encode(self.number, serializer);
+        <Option<i32>>::sse_encode(self.disc, serializer);
         <i32>::sse_encode(self.duration_ms, serializer);
         <String>::sse_encode(self.location, serializer);
         <String>::sse_encode(self.mount_point, serializer);

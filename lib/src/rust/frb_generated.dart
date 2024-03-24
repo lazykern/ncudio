@@ -537,6 +537,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  int dco_decode_box_autoadd_i_32(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as int;
+  }
+
+  @protected
   TrackDTO dco_decode_box_autoadd_track_dto(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_track_dto(raw);
@@ -579,20 +585,28 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  int? dco_decode_opt_box_autoadd_i_32(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_i_32(raw);
+  }
+
+  @protected
   TrackDTO dco_decode_track_dto(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 8)
-      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
+    if (arr.length != 10)
+      throw Exception('unexpected arr length: expect 10 but see ${arr.length}');
     return TrackDTO(
       id: dco_decode_i_32(arr[0]),
       title: dco_decode_opt_String(arr[1]),
       artist: dco_decode_opt_String(arr[2]),
       album: dco_decode_opt_String(arr[3]),
-      durationMs: dco_decode_i_32(arr[4]),
-      location: dco_decode_String(arr[5]),
-      mountPoint: dco_decode_String(arr[6]),
-      pictureId: dco_decode_opt_String(arr[7]),
+      number: dco_decode_opt_box_autoadd_i_32(arr[4]),
+      disc: dco_decode_opt_box_autoadd_i_32(arr[5]),
+      durationMs: dco_decode_i_32(arr[6]),
+      location: dco_decode_String(arr[7]),
+      mountPoint: dco_decode_String(arr[8]),
+      pictureId: dco_decode_opt_String(arr[9]),
     );
   }
 
@@ -626,6 +640,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   bool sse_decode_bool(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getUint8() != 0;
+  }
+
+  @protected
+  int sse_decode_box_autoadd_i_32(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_i_32(deserializer));
   }
 
   @protected
@@ -684,12 +704,25 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  int? sse_decode_opt_box_autoadd_i_32(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_i_32(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
   TrackDTO sse_decode_track_dto(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_id = sse_decode_i_32(deserializer);
     var var_title = sse_decode_opt_String(deserializer);
     var var_artist = sse_decode_opt_String(deserializer);
     var var_album = sse_decode_opt_String(deserializer);
+    var var_number = sse_decode_opt_box_autoadd_i_32(deserializer);
+    var var_disc = sse_decode_opt_box_autoadd_i_32(deserializer);
     var var_durationMs = sse_decode_i_32(deserializer);
     var var_location = sse_decode_String(deserializer);
     var var_mountPoint = sse_decode_String(deserializer);
@@ -699,6 +732,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         title: var_title,
         artist: var_artist,
         album: var_album,
+        number: var_number,
+        disc: var_disc,
         durationMs: var_durationMs,
         location: var_location,
         mountPoint: var_mountPoint,
@@ -732,6 +767,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_bool(bool self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putUint8(self ? 1 : 0);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_i_32(int self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self, serializer);
   }
 
   @protected
@@ -790,12 +831,24 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_opt_box_autoadd_i_32(int? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_i_32(self, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_track_dto(TrackDTO self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.id, serializer);
     sse_encode_opt_String(self.title, serializer);
     sse_encode_opt_String(self.artist, serializer);
     sse_encode_opt_String(self.album, serializer);
+    sse_encode_opt_box_autoadd_i_32(self.number, serializer);
+    sse_encode_opt_box_autoadd_i_32(self.disc, serializer);
     sse_encode_i_32(self.durationMs, serializer);
     sse_encode_String(self.location, serializer);
     sse_encode_String(self.mountPoint, serializer);
