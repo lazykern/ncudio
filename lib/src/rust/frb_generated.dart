@@ -87,9 +87,9 @@ abstract class RustLibApi extends BaseApi {
 
   String getDbUrl({dynamic hint});
 
-  void initializeDb({dynamic hint});
+  void initializeApp({dynamic hint});
 
-  void initialzeApp({dynamic hint});
+  void initializeDb({dynamic hint});
 
   Future<String?> pickDirectory({dynamic hint});
 
@@ -374,6 +374,29 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  void initializeApp({dynamic hint}) {
+    return handler.executeSync(SyncTask(
+      callFfi: () {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 6)!;
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: null,
+      ),
+      constMeta: kInitializeAppConstMeta,
+      argValues: [],
+      apiImpl: this,
+      hint: hint,
+    ));
+  }
+
+  TaskConstMeta get kInitializeAppConstMeta => const TaskConstMeta(
+        debugName: "initialize_app",
+        argNames: [],
+      );
+
+  @override
   void initializeDb({dynamic hint}) {
     return handler.executeSync(SyncTask(
       callFfi: () {
@@ -393,29 +416,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   TaskConstMeta get kInitializeDbConstMeta => const TaskConstMeta(
         debugName: "initialize_db",
-        argNames: [],
-      );
-
-  @override
-  void initialzeApp({dynamic hint}) {
-    return handler.executeSync(SyncTask(
-      callFfi: () {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 6)!;
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_unit,
-        decodeErrorData: null,
-      ),
-      constMeta: kInitialzeAppConstMeta,
-      argValues: [],
-      apiImpl: this,
-      hint: hint,
-    ));
-  }
-
-  TaskConstMeta get kInitialzeAppConstMeta => const TaskConstMeta(
-        debugName: "initialze_app",
         argNames: [],
       );
 

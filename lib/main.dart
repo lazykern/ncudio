@@ -86,7 +86,7 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
 
-    initialzeApp();
+    initializeApp();
     initializeDb();
 
     lastVolume = player.volume;

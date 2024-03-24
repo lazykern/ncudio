@@ -19,8 +19,8 @@ String getCachePath({dynamic hint}) =>
 String getDataPath({dynamic hint}) =>
     RustLib.instance.api.getDataPath(hint: hint);
 
-void initialzeApp({dynamic hint}) =>
-    RustLib.instance.api.initialzeApp(hint: hint);
+void initializeApp({dynamic hint}) =>
+    RustLib.instance.api.initializeApp(hint: hint);
 
 void initializeDb({dynamic hint}) =>
     RustLib.instance.api.initializeDb(hint: hint);

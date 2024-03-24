@@ -66,7 +66,7 @@ pub fn frb_init() {
 }
 
 #[flutter_rust_bridge::frb(sync)]
-pub fn initialze_app() {
+pub fn initialize_app() {
     fs::create_dir_all(CACHE_PATH).unwrap();
     fs::create_dir_all(DATA_PATH).unwrap();
 }
