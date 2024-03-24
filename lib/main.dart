@@ -172,8 +172,6 @@ class _MyAppState extends State<MyApp> {
                   if (position > duration) {
                     position = duration;
                   }
-                  print('duration: $duration');
-                  print('position: $position');
                   return Slider(
                     min: 0,
                     max: duration.inMilliseconds.toDouble(),
