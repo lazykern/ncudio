@@ -337,19 +337,19 @@ class _MyAppState extends State<MyApp> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      SelectableText(currentTrack?.title ?? '',
+                      SelectableText(currentTrack.title ?? '',
                           maxLines: 1,
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             overflow: TextOverflow.fade,
                           )),
-                      SelectableText(currentTrack?.artist ?? '',
+                      SelectableText(currentTrack.artist ?? '',
                           maxLines: 1,
                           style: const TextStyle(
                               fontWeight: FontWeight.normal,
                               overflow: TextOverflow.fade,
                               fontSize: 11)),
-                      SelectableText(currentTrack?.album ?? '',
+                      SelectableText(currentTrack.album ?? '',
                           maxLines: 1,
                           style: const TextStyle(
                             fontWeight: FontWeight.normal,
