@@ -293,7 +293,7 @@ packages:
       path: "external/just_audio_media_kit"
       relative: true
     source: path
-    version: "2.0.1"
+    version: "2.0.2"
   just_audio_platform_interface:
     dependency: transitive
     description:
