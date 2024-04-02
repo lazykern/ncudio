@@ -22,6 +22,9 @@ class MediaKitPlayer extends AudioPlayerPlatform {
   Duration _position = Duration.zero;
   int _currentIndex = 0;
 
+  /// [LoadRequest.initialPosition] or [seek] request before [Player.play] was called and/or finished loading.
+  Duration? _setPosition;
+
   MediaKitPlayer(super.id) {
     _player = Player(
         configuration: PlayerConfiguration(
@@ -35,6 +38,10 @@ class MediaKitPlayer extends AudioPlayerPlatform {
     _streamSubscriptions = [
       _player.stream.duration.listen((duration) {
         _processingState = ProcessingStateMessage.ready;
+        if (_setPosition != null && duration.inSeconds > 0) {
+          unawaited(_player.seek(_setPosition!));
+          _setPosition = null;
+        }
         _updatePlaybackEvent(duration: duration);
       }),
       _player.stream.position.listen((position) {
@@ -159,9 +166,7 @@ class MediaKitPlayer extends AudioPlayerPlatform {
     }
 
     if (request.initialPosition != null) {
-      _position = request.initialPosition!;
-      // TODO: fix this seek request here (it doesn't do anything)
-      await _player.seek(request.initialPosition!);
+      _setPosition = _position = request.initialPosition!;
     }
 
     _updatePlaybackEvent();
@@ -221,7 +226,12 @@ class MediaKitPlayer extends AudioPlayerPlatform {
 
     if (request.position != null) {
       _position = request.position!;
-      await _player.seek(request.position!);
+
+      if (_player.state.duration.inSeconds > 0) {
+        await _player.seek(request.position!);
+      } else {
+        _setPosition = request.position!;
+      }
     } else {
       _position = Duration.zero;
     }
@@ -285,11 +295,18 @@ class MediaKitPlayer extends AudioPlayerPlatform {
   }
 
   Media _convertAudioSourceIntoMediaKit(AudioSourceMessage audioSource) {
-    if (audioSource is UriAudioSourceMessage) {
-      return Media(audioSource.uri, httpHeaders: audioSource.headers);
-    } else {
-      throw UnsupportedError(
-          '${audioSource.runtimeType} is currently not supported');
+    switch (audioSource) {
+      case final UriAudioSourceMessage uriSource:
+        return Media(uriSource.uri, httpHeaders: audioSource.headers);
+
+      case final SilenceAudioSourceMessage silenceSource:
+        // from https://github.com/bleonard252/just_audio_mpv/blob/main/lib/src/mpv_player.dart#L137
+        return Media(
+            'av://lavfi:anullsrc=d=${silenceSource.duration.inMilliseconds}ms');
+
+      default:
+        throw UnsupportedError(
+            '${audioSource.runtimeType} is currently not supported');
     }
   }
 }

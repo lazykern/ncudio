@@ -31,7 +31,7 @@ JustAudioMediaKit.ensureInitialized();
 
 JustAudioMediaKit.ensureInitialized(
     linux: true,            // default: true  - dependency: media_kit_libs_linux
-    windows: true,          // default: true - dependency: media_kit_libs_windows_audio
+    windows: true,          // default: true  - dependency: media_kit_libs_windows_audio
     android: true,          // default: false - dependency: media_kit_libs_android_audio
     iOS: true,              // default: false - dependency: media_kit_libs_ios_audio
     macOS: true,            // default: false - dependency: media_kit_libs_macos_audio
@@ -103,7 +103,7 @@ JustAudioMediaKit.protocolWhitelist = const ['http', 'https'];
 ## Caveats
 
 - `just_audio`'s shuffleOrder is currently ignored, because there doesn't seem to be a straightforward way to implement it
-- `SilenceAudioSource` and `ClippingAudioSource` are currently not supported
+- `ClippingAudioSource` is currently not supported (waiting for [media-kit/media-kit#581](https://github.com/media-kit/media-kit/pull/581) to be released)
 - The plugin hasn't been tested with multiple player instances, though it might work.
 
 ## Licensing
