@@ -24,12 +24,11 @@ Future<void> main() async {
     windowManager.setSize(const Size(800, 600));
   }
 
-  MediaKit.ensureInitialized(libmpv: "lib\\libmpv\\libmpv-2.dll");
-
-  JustAudioMediaKit.ensureInitialized();
-  JustAudioMediaKit.title = 'ncudio';
-  JustAudioMediaKit.protocolWhitelist = const ['file'];
-  JustAudioMediaKit.mpvLogLevel = MPVLogLevel.info;
+  if (Platform.isWindows) {
+    MediaKit.ensureInitialized(libmpv: "lib\\libmpv\\libmpv-2.dll");
+  } else {
+    MediaKit.ensureInitialized();
+  }
 
   runApp(const MyApp());
 }
@@ -67,10 +66,10 @@ class _MyAppState extends State<MyApp> {
   final FocusNode searchTextFieldFocusNode = FocusNode();
   final FocusNode progressSliderFocusNode = FocusNode();
 
-  final player = AudioPlayer();
   final mpvPlayer = Player(
       configuration: PlayerConfiguration(
     title: "ncudio",
+    logLevel: MPVLogLevel.info,
     ready: () => print("MPV Ready"),
   ));
   final ValueNotifier<ConcatenatingAudioSource> playlist = ValueNotifier(
@@ -106,23 +105,18 @@ class _MyAppState extends State<MyApp> {
     initializeApp();
     initializeDb();
 
-    player.setLoopMode(LoopMode.all);
-
     searchController = TextEditingController();
     searchController.addListener(() {
       setState(() {});
     });
 
-    lastVolume = player.volume;
-
-    player.setAudioSource(playlist.value);
+    lastVolume = mpvPlayer.state.volume;
 
     refreshTrackList();
   }
 
   @override
   void dispose() {
-    player.dispose();
     mpvPlayer.dispose();
 
     searchController.dispose();
@@ -155,9 +149,9 @@ class _MyAppState extends State<MyApp> {
         },
         child: Actions(
           actions: {
-            PlayPauseIntent: PlayPauseAction(player),
-            SkipBackwardIntent: SkipBackwardAction(player),
-            SkipForwardIntent: SkipForwardAction(player),
+            // PlayPauseIntent: PlayPauseAction(player),
+            // SkipBackwardIntent: SkipBackwardAction(player),
+            // SkipForwardIntent: SkipForwardAction(player),
             FocusSearchIntent: FocusSearchAction(searchTextFieldFocusNode),
           },
           child: FocusScope(
@@ -231,7 +225,7 @@ class _MyAppState extends State<MyApp> {
                   }
                   return Actions(
                     actions: {
-                      PlayPauseIntent: PlayPauseAction(player),
+                      // PlayPauseIntent: PlayPauseAction(player),
                       DownArrowIntent: DoNothingAction(),
                     },
                     child: Slider(
@@ -323,7 +317,7 @@ class _MyAppState extends State<MyApp> {
           icon: const Icon(Icons.delete_forever),
           onPressed: () {
             deleteAllTracks().whenComplete(() => setState(() {
-                  stopAndClear();
+                  mpvPlayer.stop();
                   refreshTrackList();
                 }));
           },
@@ -341,61 +335,54 @@ class _MyAppState extends State<MyApp> {
   }
 
   Row bottomBarInner() {
-    var lhs = StreamBuilder<SequenceState?>(
-        stream: player.sequenceStateStream,
+    var lhs = StreamBuilder<Track>(
+        stream: mpvPlayer.stream.track,
         builder: (context, snapshot) {
           if (snapshot.data == null) {
             return const Center();
           }
 
-          var sequenceState = snapshot.data!;
-
-          if (sequenceState.currentSource == null) {
-            return const Center();
-          }
-
-          final currentTrack = playlist
-              .value.sequence[sequenceState.currentIndex].tag as TrackDTO;
+          var track = snapshot.data!;
 
           return Row(
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.all(Radius.circular(4)),
-                child: AspectRatio(
-                  aspectRatio: 1,
-                  child: currentTrack.pictureId != null
-                      ? Image(
-                          image: FileImage(File(
-                              "${getCachePath()}/${currentTrack.pictureId!}.jpg")),
-                          filterQuality: FilterQuality.medium,
-                          fit: BoxFit.cover,
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) {
-                              return child;
-                            }
-                            return const SizedBox();
-                          },
-                          frameBuilder:
-                              (context, child, frame, wasSynchronouslyLoaded) {
-                            if (wasSynchronouslyLoaded) {
-                              return child;
-                            }
-                            return AnimatedOpacity(
-                              opacity: frame == null ? 0 : 1,
-                              duration: const Duration(milliseconds: 500),
-                              curve: Curves.easeOut,
-                              child: child,
-                            );
-                          },
-                        )
-                      : Container(
-                          color: Colors.grey,
-                          child: const Icon(Icons.music_note),
-                        ),
-                ),
-              ),
+              // ClipRRect(
+              //   borderRadius: const BorderRadius.all(Radius.circular(4)),
+              //   child: AspectRatio(
+              //     aspectRatio: 1,
+              //     child: currentTrack.pictureId != null
+              //         ? Image(
+              //             image: FileImage(File(
+              //                 "${getCachePath()}/${currentTrack.pictureId!}.jpg")),
+              //             filterQuality: FilterQuality.medium,
+              //             fit: BoxFit.cover,
+              //             loadingBuilder: (context, child, loadingProgress) {
+              //               if (loadingProgress == null) {
+              //                 return child;
+              //               }
+              //               return const SizedBox();
+              //             },
+              //             frameBuilder:
+              //                 (context, child, frame, wasSynchronouslyLoaded) {
+              //               if (wasSynchronouslyLoaded) {
+              //                 return child;
+              //               }
+              //               return AnimatedOpacity(
+              //                 opacity: frame == null ? 0 : 1,
+              //                 duration: const Duration(milliseconds: 500),
+              //                 curve: Curves.easeOut,
+              //                 child: child,
+              //               );
+              //             },
+              //           )
+              //         : Container(
+              //             color: Colors.grey,
+              //             child: const Icon(Icons.music_note),
+              //           ),
+              //   ),
+              // ),
               const SizedBox(
                 width: 8,
               ),
@@ -404,30 +391,30 @@ class _MyAppState extends State<MyApp> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      SelectableText(currentTrack.title ?? '',
+                      SelectableText(track.audio.title ?? '',
                           maxLines: 1,
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             overflow: TextOverflow.fade,
                           )),
-                      SelectableText(currentTrack.artist?.name ?? '',
-                          maxLines: 1,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.normal,
-                              overflow: TextOverflow.fade,
-                              fontSize: 11)),
-                      SelectableText(currentTrack.album?.name ?? '',
-                          maxLines: 1,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.normal,
-                            overflow: TextOverflow.fade,
-                            fontSize: 11,
-                          )),
+                      // SelectableText(currentTrack.artist?.name ?? '',
+                      //     maxLines: 1,
+                      //     style: const TextStyle(
+                      //         fontWeight: FontWeight.normal,
+                      //         overflow: TextOverflow.fade,
+                      //         fontSize: 11)),
+                      // SelectableText(currentTrack.album?.name ?? '',
+                      //     maxLines: 1,
+                      //     style: const TextStyle(
+                      //       fontWeight: FontWeight.normal,
+                      //       overflow: TextOverflow.fade,
+                      //       fontSize: 11,
+                      //     )),
                       StreamBuilder<Duration?>(
-                          stream: player.durationStream,
+                          stream: mpvPlayer.stream.duration,
                           builder: (context, durationSnapshot) {
                             return StreamBuilder<Duration>(
-                                stream: player.positionStream,
+                                stream: mpvPlayer.stream.position,
                                 builder: (context, positionSnapshot) {
                                   var position =
                                       positionSnapshot.data ?? Duration.zero;
@@ -566,18 +553,18 @@ class _MyAppState extends State<MyApp> {
   IconButton volumeToggleButton() {
     return IconButton(
       icon: StreamBuilder<double>(
-          stream: player.volumeStream,
+          stream: mpvPlayer.stream.volume,
           builder: (context, snapshot) {
             return Icon(snapshot.data != null && snapshot.data! > 0
                 ? Icons.volume_up
                 : Icons.volume_off);
           }),
       onPressed: () {
-        if (player.volume > 0) {
-          lastVolume = player.volume;
-          player.setVolume(0);
+        if (mpvPlayer.state.volume > 0) {
+          lastVolume = mpvPlayer.state.volume;
+          mpvPlayer.setVolume(0);
         } else {
-          player.setVolume(lastVolume);
+          mpvPlayer.setVolume(lastVolume);
         }
       },
     );
@@ -604,14 +591,14 @@ class _MyAppState extends State<MyApp> {
     return SliderTheme(
       data: nakedSliderThemeData(),
       child: StreamBuilder<double>(
-          stream: player.volumeStream,
+          stream: mpvPlayer.stream.volume,
           builder: (context, snapshot) {
             return Slider(
               min: 0,
               max: 1,
               value: snapshot.data ?? 1,
               onChanged: (value) {
-                player.setVolume(value);
+                mpvPlayer.setVolume(value);
               },
               onChangeEnd: (value) {
                 setState(() {});
@@ -709,8 +696,6 @@ class _MyAppState extends State<MyApp> {
           var actions = <MenuElement>[
             MenuAction(
                 callback: () {
-                  // setTrack(track);
-                  // play();
                   mpvPlayer.open(Media(track.location));
                 },
                 title: "Play",
@@ -718,7 +703,6 @@ class _MyAppState extends State<MyApp> {
             MenuAction(
                 title: "Add to Queue",
                 callback: () {
-                  // AddToQueueAction(track, player, playlist.value).invoke(null);
                   mpvPlayer.add(Media(track.location));
                 },
                 image: MenuImage.icon(Icons.queue)),
@@ -729,8 +713,9 @@ class _MyAppState extends State<MyApp> {
                 title: "Add Album to Queue",
                 callback: () {
                   findTrackByAlbum(albumId: track.album!.id).then((tracks) {
-                    AddManyToQueueAction(tracks, player, playlist.value)
-                        .invoke(null);
+                    tracks.forEach((element) {
+                      mpvPlayer.add(Media(element.location));
+                    });
                   });
                 },
                 image: MenuImage.icon(Icons.queue_music)));
@@ -814,10 +799,9 @@ class _MyAppState extends State<MyApp> {
         ),
         onTap: () {
           if (HardwareKeyboard.instance.isShiftPressed) {
-            AddToQueueAction(track, player, playlist.value).invoke(null);
+            mpvPlayer.add(Media(track.location));
           } else {
-            setTrack(track);
-            play();
+            mpvPlayer.open(Media(Uri.file(track.location).toString()));
           }
         },
       ),
@@ -833,13 +817,6 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
-  void setTrack(TrackDTO track) {
-    final source = AudioSource.uri(Uri.file(track.location), tag: track);
-    playlist.value.add(source);
-    player.setAudioSource(playlist.value,
-        initialIndex: playlist.value.length - 1);
-  }
-
   // void addTrackNext(TrackDTO track) {
   //   final source = AudioSource.uri(Uri.file(track.location), tag: track);
   //   if (player.currentIndex == null) {
@@ -849,38 +826,6 @@ class _MyAppState extends State<MyApp> {
 
   //   playlist.value.insert(player.currentIndex! + 1, source);
   // }
-
-  void play() {
-    player.play();
-  }
-
-  void togglePlayPause() {
-    if (player.playing) {
-      player.pause();
-    } else {
-      player.play();
-    }
-  }
-
-  void stopAndClear() {
-    player.stop();
-  }
-
-  void stop() {
-    player.stop();
-  }
-
-  void printPlayerInfo() {
-    print('Player Info:');
-    print('Playing: ${player.playing}');
-    print('LoopMode: ${player.loopMode}');
-    print('ShuffleMode: ${player.shuffleModeEnabled}');
-    print('Volume: ${player.volume}');
-    print('Position: ${player.position}');
-    print('Duration: ${player.duration}');
-    print('CurrentIndex: ${player.currentIndex}');
-    print('Sequence: ${player.sequence}');
-  }
 }
 
 class PlayPauseIntent extends Intent {
@@ -1016,60 +961,6 @@ class FocusOrNullAction extends Action<Intent> {
 class DoNothingAction extends Action<Intent> {
   @override
   Object? invoke(Intent intent) {
-    return null;
-  }
-}
-
-class AddToQueueAction extends Action<Intent> {
-  final TrackDTO track;
-  final AudioPlayer player;
-  final ConcatenatingAudioSource playlist;
-
-  AddToQueueAction(this.track, this.player, this.playlist);
-
-  @override
-  Object? invoke(Intent? intent) {
-    playlist.add(AudioSource.uri(Uri.file(track.location), tag: track));
-
-    if (player.sequenceState?.currentSource == null) {
-      player.setAudioSource(playlist, initialIndex: playlist.length - 1);
-      return null;
-    }
-
-    if (player.currentIndex != null &&
-        !player.playing &&
-        player.duration != null &&
-        player.position.inSeconds == player.duration!.inSeconds) {
-      player.setAudioSource(playlist, initialIndex: player.currentIndex! + 1);
-    }
-    return null;
-  }
-}
-
-class AddManyToQueueAction extends Action<Intent> {
-  final List<TrackDTO> tracks;
-  final AudioPlayer player;
-  final ConcatenatingAudioSource playlist;
-
-  AddManyToQueueAction(this.tracks, this.player, this.playlist);
-
-  @override
-  Object? invoke(Intent? intent) {
-    for (var track in tracks) {
-      playlist.add(AudioSource.uri(Uri.file(track.location), tag: track));
-    }
-
-    if (player.sequenceState?.currentSource == null) {
-      player.setAudioSource(playlist, initialIndex: playlist.length - 1);
-      return null;
-    }
-
-    if (player.currentIndex != null &&
-        !player.playing &&
-        player.duration != null &&
-        player.position.inSeconds == player.duration!.inSeconds) {
-      player.setAudioSource(playlist, initialIndex: player.currentIndex! + 1);
-    }
     return null;
   }
 }
