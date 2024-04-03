@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:media_kit/media_kit.dart';
 import 'package:super_context_menu/super_context_menu.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_media_kit/just_audio_media_kit.dart';
@@ -26,6 +27,7 @@ Future<void> main() async {
   JustAudioMediaKit.ensureInitialized();
   JustAudioMediaKit.title = 'ncudio';
   JustAudioMediaKit.protocolWhitelist = const ['file'];
+  JustAudioMediaKit.mpvLogLevel = MPVLogLevel.info;
 
   runApp(const MyApp());
 }
@@ -64,8 +66,8 @@ class _MyAppState extends State<MyApp> {
   final FocusNode progressSliderFocusNode = FocusNode();
 
   final player = AudioPlayer();
-  final ValueNotifier<ConcatenatingAudioSource> playlist =
-      ValueNotifier(ConcatenatingAudioSource(children: []));
+  final ValueNotifier<ConcatenatingAudioSource> playlist = ValueNotifier(
+      ConcatenatingAudioSource(children: [], useLazyPreparation: true));
 
   final _listController = ListController();
   final _scrollController = ScrollController();
@@ -95,6 +97,8 @@ class _MyAppState extends State<MyApp> {
 
     initializeApp();
     initializeDb();
+
+    player.setLoopMode(LoopMode.all);
 
     searchController = TextEditingController();
     searchController.addListener(() {

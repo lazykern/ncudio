@@ -37,7 +37,7 @@ dependencies:
   cupertino_icons: ^1.0.6
   rust_lib_ncudio:
     path: rust_builder
-  flutter_rust_bridge: 2.0.0-dev.28
+  flutter_rust_bridge: 2.0.0-dev.29
   super_sliver_list: ^0.4.0
   window_manager: ^0.3.8
   marquee: ^2.2.3
@@ -48,9 +48,18 @@ dependencies:
   media_kit_libs_audio: any
   media_kit_libs_linux: any
   media_kit_libs_windows_audio: any
-  just_audio: ^0.9.36
+  just_audio:
+    git:
+      url: https://github.com/ryanheise/just_audio.git
+      ref: 6952be55c6ddfb01f2567c0737ef098d1bd9fd45
+      path: just_audio 
   super_clipboard: ^0.8.0
   super_context_menu: ^0.8.9
+  media_kit:
+    git:
+      url: https://github.com/lazykern/media-kit.git
+      ref: 64be0a0dfad06dff613207d5c83f91e55613343f
+      path: media_kit
 
 
 
