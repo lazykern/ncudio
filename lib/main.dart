@@ -24,6 +24,8 @@ Future<void> main() async {
     windowManager.setSize(const Size(800, 600));
   }
 
+  MediaKit.ensureInitialized(libmpv: "lib\\libmpv\\libmpv-2.dll");
+
   JustAudioMediaKit.ensureInitialized();
   JustAudioMediaKit.title = 'ncudio';
   JustAudioMediaKit.protocolWhitelist = const ['file'];
@@ -66,8 +68,14 @@ class _MyAppState extends State<MyApp> {
   final FocusNode progressSliderFocusNode = FocusNode();
 
   final player = AudioPlayer();
+  final mpvPlayer = Player(
+      configuration: PlayerConfiguration(
+    title: "ncudio",
+    ready: () => print("MPV Ready"),
+  ));
   final ValueNotifier<ConcatenatingAudioSource> playlist = ValueNotifier(
       ConcatenatingAudioSource(children: [], useLazyPreparation: true));
+  // final ValueNotifier<Playlist> mpvPlaylist = ValueNotifier(const Playlist([]));
 
   final _listController = ListController();
   final _scrollController = ScrollController();
@@ -115,6 +123,7 @@ class _MyAppState extends State<MyApp> {
   @override
   void dispose() {
     player.dispose();
+    mpvPlayer.dispose();
 
     searchController.dispose();
 
@@ -205,11 +214,11 @@ class _MyAppState extends State<MyApp> {
     return SliderTheme(
       data: nakedSliderThemeData(),
       child: StreamBuilder<Duration?>(
-          stream: player.durationStream,
+          stream: mpvPlayer.stream.duration,
           builder: (context, durationSnapshot) {
             var duration = durationSnapshot.data ?? Duration.zero;
             return StreamBuilder<Duration>(
-                stream: player.positionStream,
+                stream: mpvPlayer.stream.position,
                 builder: (context, positionSnapshot) {
                   var position = positionSnapshot.data ?? Duration.zero;
 
@@ -233,7 +242,7 @@ class _MyAppState extends State<MyApp> {
                           ? 0
                           : position.inMilliseconds.toDouble(),
                       onChanged: (value) {
-                        player.seek(Duration(milliseconds: value.toInt()));
+                        mpvPlayer.seek(Duration(milliseconds: value.toInt()));
                       },
                     ),
                   );
@@ -521,27 +530,29 @@ class _MyAppState extends State<MyApp> {
         IconButton(
           icon: const Icon(Icons.skip_previous),
           onPressed: () {
-            player.seekToPrevious();
+            // player.seekToPrevious();
+            mpvPlayer.previous();
           },
         ),
         IconButton(
           icon: StreamBuilder<bool>(
-              stream: player.playingStream,
+              stream: mpvPlayer.stream.playing,
               builder: (context, snapshot) {
                 return Icon(snapshot.data != null && snapshot.data!
                     ? Icons.pause
                     : Icons.play_arrow);
               }),
           onPressed: () {
-            togglePlayPause();
+            mpvPlayer.playOrPause();
           },
         ),
         IconButton(
           icon: const Icon(Icons.skip_next),
           onPressed: () {
-            player.seekToNext().then((value) {
-              printPlayerInfo();
-            });
+            mpvPlayer.next();
+            // player.seekToNext().then((value) {
+            //   printPlayerInfo();
+            // });
           },
         ),
       ],
@@ -698,15 +709,17 @@ class _MyAppState extends State<MyApp> {
           var actions = <MenuElement>[
             MenuAction(
                 callback: () {
-                  setTrack(track);
-                  play();
+                  // setTrack(track);
+                  // play();
+                  mpvPlayer.open(Media(track.location));
                 },
                 title: "Play",
                 image: MenuImage.icon(Icons.play_arrow)),
             MenuAction(
                 title: "Add to Queue",
                 callback: () {
-                  AddToQueueAction(track, player, playlist.value).invoke(null);
+                  // AddToQueueAction(track, player, playlist.value).invoke(null);
+                  mpvPlayer.add(Media(track.location));
                 },
                 image: MenuImage.icon(Icons.queue)),
           ];
